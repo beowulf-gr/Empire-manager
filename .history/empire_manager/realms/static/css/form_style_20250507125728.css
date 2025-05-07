@@ -1,0 +1,31 @@
+/* styles.css */
+
+/* Enforce block display for form elements */
+form {
+    display: block;
+}
+
+label, select, input {
+    display: block;      /* Ensure all form elements are stacked */
+    margin-bottom: 15px; /* Add spacing between form elements */
+}
+
+/* Button container - flexbox for horizontal buttons */
+.button-container {
+    display: flex;       /* Align buttons horizontally */
+    gap: 15px;           /* Space between the buttons */
+}
+
+button {
+    width: 150px;        /* Optional: Set width for uniform button size */
+}
+
+a.back-link {
+    display: inline-block;    /* Ensure it's treated like a block-level element */
+    margin-top: 20px;         /* Adds space above the "Back" link */
+    padding: 10px;            /* Optional: adds padding inside the link */
+    text-decoration: none;    /* Removes underline from the link */
+    background-color: #f0f0f0; /* Optional: adds a background to the link */
+    border-radius: 4px;       /* Optional: rounds the corners */
+    color: #000;              /* Sets the text color */
+}

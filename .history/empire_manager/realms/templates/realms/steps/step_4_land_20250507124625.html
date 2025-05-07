@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 4 - Land</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+</head>
+<body>
+    <h1>Step 4: Assign Starting Land</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label>Name:</label>
+            {{ form.name }}
+
+        <label for="unit_type">Land Type:</label>
+            {{ form.unit_type }}
+
+        <button type="submit" name="next" value="1">Next</button>
+        <button type="submit">Add Another</button>
+    </form>
+    
+    <a href="{% url 'create_realm_step_3' %}">Back</a>
+</body>
+</html>

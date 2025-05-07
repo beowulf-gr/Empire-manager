@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 3 - Resources</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}"></head>
+<body>
+    <h1>Step 3: Starting Resources</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label>Food:</label>
+        <input type="number" name="food" value="0"><br>
+        <label>Wood:</label>
+        <input type="number" name="wood" value="0"><br>
+        <label>Stone:</label>
+        <input type="number" name="stone" value="0"><br><br>
+
+        <button type="submit">Next</button>
+    </form>
+    <a href="{% url 'create_realm_step_2' %}">Back</a>
+</body>
+</html>

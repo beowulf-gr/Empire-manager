@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 2 - Treasury</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}"></head>
+<body>
+    <h1>Step 2: Starting Treasury</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="treasury">Gold Amount:</label>
+        <input type="number" name="treasury" id="treasury" required><br><br>
+
+        <button type="submit">Next</button>
+    </form>
+    <a href="{% url 'create_realm_step_1' %}">Back</a>
+</body>
+</html>
