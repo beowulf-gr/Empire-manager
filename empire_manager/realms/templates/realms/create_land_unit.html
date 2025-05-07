@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create LandUnit</title>
+</head>
+<body>
+    <h1>Create Land Unit for {{ realm.name }}</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="name">Land Unit Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="unit_type">Unit Type:</label>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" name="done">Done</button>
+            <button type="submit" name="add_another">Add Another</button>
+        </form>
+
+        <button type="submit" name="done" value="1">Done</button>
+        <button type="submit">Add Another</button>
+    </form>
+    <br>
+    <a href="{% url 'realm_detail' name=realm.name %}">Back to Realm Details</a>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Population Unit</title>
+</head>
+<body>
+    <h1>Create Population Unit for {{ realm.name }}</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="race">Race:</label>
+        <select id="race" name="race">
+            <option value="Dwarves">Dwarves</option>
+            <option value="Elves">Elves</option>
+            <option value="Gnomes">Gnomes</option>
+            <option value="Goblins">Goblins</option>
+            <option value="Halflings">Halflings</option>
+            <option value="Humans">Humans</option>
+            <option value="Orcs">Orcs</option>
+            <option value="Undead">Undead</option>
+        </select><br><br>
+
+        <button type="submit">Create Population Unit</button>
+    </form>
+    <br>
+    <a href="{% url 'realm_detail' name=realm.name %}">Back to Realm Details</a>
+</body>
+</html>

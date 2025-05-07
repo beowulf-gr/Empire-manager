@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>Edit Population</title></head>
+<body>
+    <h1>Edit Population</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="unit-form">
+                {{ form.as_p }}
+            </div>
+        {% endfor %}
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <p><a href="{% url 'create_realm_review' %}">Back to Review</a></p>
+
+    <h3>Edit Other Steps:</h3>
+    <ul>
+        <li><a href="{% url 'edit_realm_info' %}">Edit Realm Info</a></li>
+        <li><a href="{% url 'edit_treasury' %}">Edit Treasury</a></li>
+        <li><a href="{% url 'edit_resources' %}">Edit Resources</a></li>
+        <li><a href="{% url 'edit_land' %}">Edit Land</a></li>
+    </ul>
+</body>
+</html>

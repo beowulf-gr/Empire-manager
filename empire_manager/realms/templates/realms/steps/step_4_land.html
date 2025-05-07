@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 4 - Land</title></head>
+<body>
+    <h1>Step 4: Assign Starting Land</h1>
+
+    {% load static %}
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div id="form-container">
+            <!-- This will contain all your form fields, including the dynamically added production choice dropdown -->
+
+            <div>
+                {{ form.non_field_errors }}
+            </div>
+
+            <div>
+                <label for="{{ form.name.id_for_label }}">Name:</label>
+                {{ form.name.errors }}
+                {{ form.name }}
+            </div>
+
+            <div>
+                <label for="{{ form.unit_type.id_for_label }}">Land Type:</label>
+                {{ form.unit_type.errors }}
+                {{ form.unit_type }}
+            </div>
+
+            <!-- Production choice field will be handled by JavaScript -->
+        </div>
+
+        <button type="submit" name="next" value="1">Next</button>
+        <button type="submit">Add Another</button>
+    </form>
+    <a href="{% url 'create_realm_step_3' %}">Back</a>
+    <script src="{% static 'js/production_choices.js' %}"></script>
+</body>
+</html>

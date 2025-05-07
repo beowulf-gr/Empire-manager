@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Realms</title>
+</head>
+<body>
+    <h1>All Realms</h1>
+    <ul>
+        {% for realm in realms %}
+            <li><a href="{% url 'realm_detail' name=realm.name %}">{{ realm.name }}</a></li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'create_realm_start' %}">Create a New Realm</a>
+</body>
+</html>

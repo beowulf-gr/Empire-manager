@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 5 - Population</title></head>
+<body>
+    <h1>Step 5: Assign Starting Population</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="race">Race:</label>
+        <select name="race" id="race">
+            <option value="Human">Human</option>
+            <option value="Elf">Elf</option>
+            <option value="Dwarf">Dwarf</option>
+            <option value="Orc">Orc</option>
+        </select><br><br>
+
+        <button type="submit" name="next" value="1">Next</button>
+        <button type="submit">Add Another</button>
+    </form>
+    <a href="{% url 'create_realm_step_4' %}">Back</a>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 1 - Realm Info</title></head>
+<body>
+    <h1>Step 1: Realm Info</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="name">Realm Name:</label>
+        <input type="text" name="name" id="name" required><br><br>
+
+        <label for="ruler">Ruler Name:</label>
+        <input type="text" name="ruler" id="ruler" required><br><br>
+
+        {% if error %}<p style="color: red;">{{ error }}</p>{% endif %}
+
+        <button type="submit">Next</button>
+    </form>
+</body>
+</html>
