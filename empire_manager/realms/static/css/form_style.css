@@ -7,17 +7,17 @@ form {
 
 label, select, input {
     display: block;      /* Ensure all form elements are stacked */
-    margin-bottom: 15px; /* Add spacing between form elements */
+    margin-bottom: 10px; /* Add spacing between form elements */
 }
 
 /* Button container - flexbox for horizontal buttons */
 .button-container {
     display: flex;       /* Align buttons horizontally */
-    gap: 15px;           /* Space between the buttons */
+    gap: 10px;           /* Space between the buttons */
 }
 
 button {
-    width: 150px;        /* Optional: Set width for uniform button size */
+    /*width: 150px;        /* Optional: Set width for uniform button size */
 }
 
 a.back-link {
