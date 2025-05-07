@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>Edit Land</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+</head>
+<body>
+    <h1>Edit Land</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="form-row">
+                {{ form.name.label_tag }} {{ form.name }}
+                {{ form.unit_type.label_tag }} {{ form.unit_type }}
+                
+                {% if not form.production_choice.is_hidden %}
+                    {{ form.production_choice.label_tag }} {{ form.production_choice }}
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <p><a href="{% url 'create_realm_review' %}">Back to Review</a></p>
+
+</body>
+</html>

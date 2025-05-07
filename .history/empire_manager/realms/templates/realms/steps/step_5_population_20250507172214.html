@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 5 - Population</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}"></head>
+<body>
+    <h1>Step 5: Assign Starting Population</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="race">Race:</label>
+            {{ form.race }}
+
+        <button type="submit" name="next" value="1">Next</button>
+        <button type="submit">Add Another</button>
+    </form>
+    <a href="{% url 'create_realm_step_4' %}" class="back-link">Back</a>
+</body>
+</html>

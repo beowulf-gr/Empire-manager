@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head><title>Review Realm</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}"></head>
+<body>
+    <h1>Step 6: Review Your Realm</h1>
+    <ul>
+        <li><strong>Name:</strong> {{ realm.name }}</li>
+        <li><strong>Ruler:</strong> {{ realm.ruler }}</li>
+        <li><strong>Treasury:</strong> {{ realm.treasury }}</li>
+        <li><strong>Resources:</strong>
+            <ul>
+                {% for key, value in realm.resources.items %}
+                    <li>{{ key }}: {{ value }}</li>
+                {% endfor %}
+            </ul>
+        </li>
+        <li><strong>Land:</strong>
+            <ul>
+                {% for land_unit in realm.land_units.all %}
+                    <li>{{ land_unit.name }} ({{ land_unit.unit_type }})</li>
+                {% endfor %}
+            </ul>
+        </li>
+        <li><strong>Population:</strong>
+            <ul>
+                {% for population_unit in realm.population_units %}
+                    <li>{{ population_unit.race }}</li>
+                {% endfor %}
+            </ul>
+        </li>
+    </ul>
+
+    <form method="POST">
+        {% csrf_token %}
+        {% if realm_name %}
+            <button type="submit">Confirm and Save Changes</button>
+        {% else %}
+            <button type="submit">Confirm and Create Realm</button>
+        {% endif %}
+    </form>
+
+    <h3>Edit Step:</h3>
+    <ul>
+        {% if realm_name %}
+            <li><a href="{% url 'edit_existing_realm_info' realm_name=realm_name %}">Realm Info</a></li>
+            <li><a href="{% url 'edit_existing_treasury' realm_name=realm_name %}">Treasury</a></li>
+            <li><a href="{% url 'edit_existing_resources' realm_name=realm_name %}">Resources</a></li>
+            <li><a href="{% url 'edit_existing_land' realm_name=realm_name %}">Land</a></li>
+            <li><a href="{% url 'edit_existing_population' realm_name=realm_name %}">Population</a></li>
+        {% else %}
+            <li><a href="{% url 'edit_realm_info' %}">Realm Info</a></li>
+            <li><a href="{% url 'edit_treasury' %}">Treasury</a></li>
+            <li><a href="{% url 'edit_resources' %}">Resources</a></li>
+            <li><a href="{% url 'edit_land' %}">Land</a></li>
+            <li><a href="{% url 'edit_population' %}">Population</a></li>
+        {% endif %}
+    </ul>
+</body>
+</html>
