@@ -4,7 +4,6 @@ from django.http import HttpResponse, Http404
 from django.contrib import messages
 from .forms import RealmInfoForm, TreasuryForm, ResourcesForm, LandUnitForm, PopulationUnitForm
 from django.forms import formset_factory, modelformset_factory
-from django.urls import reverse
 
 # List all realms
 def realm_list(request):
@@ -212,13 +211,13 @@ def create_realm_review(request):
     if request.method == "POST":
         # If editing an existing realm
         if realm_name:
-            realm.ruler = data['ruler']
-            realm.treasury = data['treasury']
-            realm.resources = data['resources']
+            realm.ruler = realm_data['ruler']
+            realm.treasury = realm_data['treasury']
+            realm.resources = realm_data['resources']
             realm.save()
 
             # Now handle land and population units
-            for land in data.get('land_units', []):
+            for land in realm_data.get('land_units', []):
                 unit_type = LandUnitType.objects.get(name=land['unit_type'])  # Fetching by name
                 LandUnit.objects.create(
                     realm=realm,
@@ -226,7 +225,7 @@ def create_realm_review(request):
                     unit_type=unit_type,
                 )
 
-            for pop in data.get('population_units', []):
+            for pop in realm_data.get('population_units', []):
                 PopulationUnit.objects.create(
                     realm=realm,
                     race=pop['race']
@@ -375,7 +374,7 @@ def edit_treasury(request, realm_name=None):
             else:
                 request.session['new_realm']['treasury'] = form.cleaned_data['treasury']
                 request.session['new_realm'] = realm_data  # Reassign the whole thing
-            return redirect(f"{reverse('create_realm_review')}?realm_name={realm.name}")  # Go back to the review page
+            return redirect('create_realm_review')  # Go back to the review page
     else:
         if realm_name:
             initial_value = realm.treasury

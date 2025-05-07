@@ -12,17 +12,7 @@
     <p>Ruler: {{ realm.ruler }}</p>
     <p>Season: {{ realm.season }}</p>
     <p>Year: {{ realm.year }}</p>
-
-    <h2>Resources</h2>
-    <ul>
-        <li>Gold: {{ realm.treasury }}</li>
-        {% for resource, amount in realm.resources.items %}
-            <li>{{ resource }}: {{ amount }} </li>
-        {% empty %}
-            <li>No resources yet.</li>
-        {% endfor %}
-    </ul>
-    <!-- <p>Resources: {{ realm.resources }}</p> -->
+    <p>Resources: {{ realm.resources }}</p>
 
     <h2>Land Units</h2>
     <ul>

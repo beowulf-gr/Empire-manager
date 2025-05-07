@@ -4,7 +4,6 @@ from django.http import HttpResponse, Http404
 from django.contrib import messages
 from .forms import RealmInfoForm, TreasuryForm, ResourcesForm, LandUnitForm, PopulationUnitForm
 from django.forms import formset_factory, modelformset_factory
-from django.urls import reverse
 
 # List all realms
 def realm_list(request):
@@ -194,74 +193,37 @@ def create_realm_step_5(request):
     return render(request, 'realms/steps/step_5_population.html')
 
 def create_realm_review(request):
-    realm_name = request.GET.get('realm_name')  # You may pass the realm name in the URL
-
-    if realm_name:
-        realm = get_object_or_404(Realm, name=realm_name)
-        data = {
-            'name': realm.name,
-            'ruler': realm.ruler,
-            'treasury': realm.treasury,
-            'resources': realm.resources
-        }
-    else:
-        data = request.session.get('new_realm', {})
-        
+    data = request.session.get('new_realm', {})
     print("Session data at review step:", data)
 
     if request.method == "POST":
-        # If editing an existing realm
-        if realm_name:
-            realm.ruler = data['ruler']
-            realm.treasury = data['treasury']
-            realm.resources = data['resources']
-            realm.save()
+        realm = Realm.objects.create(
+            name=data['name'],
+            ruler=data['ruler'],
+            treasury=data['treasury'],
+            resources=data['resources']
+        )
 
-            # Now handle land and population units
-            for land in data.get('land_units', []):
-                unit_type = LandUnitType.objects.get(name=land['unit_type'])  # Fetching by name
-                LandUnit.objects.create(
-                    realm=realm,
-                    name=land['name'],
-                    unit_type=unit_type,
-                )
-
-            for pop in data.get('population_units', []):
-                PopulationUnit.objects.create(
-                    realm=realm,
-                    race=pop['race']
-                )
-
-            # Cleanup session as we no longer need it for existing realms
-            del request.session['new_realm']
-        else:    
-            realm = Realm.objects.create(
-                name=data['name'],
-                ruler=data['ruler'],
-                treasury=data['treasury'],
-                resources=data['resources']
+        # Create land units
+        for land in data.get('land_units', []):
+            unit_type = LandUnitType.objects.get(name=land['unit_type'])  # Fetching by name
+            LandUnit.objects.create(
+                realm=realm,
+                name=land['name'],
+                unit_type=unit_type,  # Assign the correct LandUnitType instance
+                # You can keep settlement_capacity if needed, just uncomment the line
+                #settlement_capacity=land['settlement_capacity']  # Uncomment this if needed
             )
 
-            # Create land units
-            for land in data.get('land_units', []):
-                unit_type = LandUnitType.objects.get(name=land['unit_type'])  # Fetching by name
-                LandUnit.objects.create(
-                    realm=realm,
-                    name=land['name'],
-                    unit_type=unit_type,  # Assign the correct LandUnitType instance
-                    # You can keep settlement_capacity if needed, just uncomment the line
-                    #settlement_capacity=land['settlement_capacity']  # Uncomment this if needed
-                )
+        # Create population units
+        for pop in data.get('population_units', []):
+            PopulationUnit.objects.create(
+                realm=realm,
+                race=pop['race']
+            )
 
-            # Create population units
-            for pop in data.get('population_units', []):
-                PopulationUnit.objects.create(
-                    realm=realm,
-                    race=pop['race']
-                )
-
-            # Cleanup
-            del request.session['new_realm']
+        # Cleanup
+        del request.session['new_realm']
         return redirect('realm_detail', name=realm.name)
 
     return render(request, 'realms/steps/review.html', {"realm": data})
@@ -375,13 +337,13 @@ def edit_treasury(request, realm_name=None):
             else:
                 request.session['new_realm']['treasury'] = form.cleaned_data['treasury']
                 request.session['new_realm'] = realm_data  # Reassign the whole thing
-            return redirect(f"{reverse('create_realm_review')}?realm_name={realm.name}")  # Go back to the review page
+            return redirect('create_realm_review')  # Go back to the review page
     else:
         if realm_name:
             initial_value = realm.treasury
         else:
             initial_value = realm_data.get('treasury', 0)
-        form = TreasuryForm(initial={'treasury': initial_value})
+        form = TreasuryForm(initial={'treasury': realm_data.get('treasury', 0)})
     return render(request, 'realms/edit/edit_treasury.html', {'form': form})
 
 def edit_resources(request, realm_name=None):

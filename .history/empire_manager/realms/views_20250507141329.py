@@ -4,7 +4,6 @@ from django.http import HttpResponse, Http404
 from django.contrib import messages
 from .forms import RealmInfoForm, TreasuryForm, ResourcesForm, LandUnitForm, PopulationUnitForm
 from django.forms import formset_factory, modelformset_factory
-from django.urls import reverse
 
 # List all realms
 def realm_list(request):
@@ -375,7 +374,7 @@ def edit_treasury(request, realm_name=None):
             else:
                 request.session['new_realm']['treasury'] = form.cleaned_data['treasury']
                 request.session['new_realm'] = realm_data  # Reassign the whole thing
-            return redirect(f"{reverse('create_realm_review')}?realm_name={realm.name}")  # Go back to the review page
+            return redirect('create_realm_review')  # Go back to the review page
     else:
         if realm_name:
             initial_value = realm.treasury

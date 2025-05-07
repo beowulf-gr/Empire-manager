@@ -15,7 +15,6 @@
 
     <h2>Resources</h2>
     <ul>
-        <li>Gold: {{ realm.treasury }}</li>
         {% for resource, amount in realm.resources.items %}
             <li>{{ resource }}: {{ amount }} </li>
         {% empty %}

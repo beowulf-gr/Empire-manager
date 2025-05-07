@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html>
-<head><title>Edit Resources</title>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
-</head>
+<head><title>Edit Population</title></head>
 <body>
-    <h1>Edit Resources</h1>
+    <h1>Edit Population</h1>
 
     <form method="POST">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="unit-form">
+                {{ form.as_p }}
+            </div>
+        {% endfor %}
         <button type="submit">Save Changes</button>
     </form>
 
@@ -19,8 +21,8 @@
     <ul>
         <li><a href="{% url 'edit_realm_info' %}">Edit Realm Info</a></li>
         <li><a href="{% url 'edit_treasury' %}">Edit Treasury</a></li>
+        <li><a href="{% url 'edit_resources' %}">Edit Resources</a></li>
         <li><a href="{% url 'edit_land' %}">Edit Land</a></li>
-        <li><a href="{% url 'edit_population' %}">Edit Population</a></li>
     </ul>
 </body>
 </html>

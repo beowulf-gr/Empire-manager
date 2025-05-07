@@ -1,16 +1,12 @@
 <!DOCTYPE html>
 <html>
-<head><title>Edit Resources</title>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
-</head>
+<head><title>Edit Treasury</title></head>
 <body>
-    <h1>Edit Resources</h1>
-
+    <h1>Edit Treasury</h1>
     <form method="POST">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Save Changes</button>
+        <button type="submit">Save Treasury</button>
     </form>
 
     <p><a href="{% url 'create_realm_review' %}">Back to Review</a></p>
@@ -18,7 +14,7 @@
     <h3>Edit Other Steps:</h3>
     <ul>
         <li><a href="{% url 'edit_realm_info' %}">Edit Realm Info</a></li>
-        <li><a href="{% url 'edit_treasury' %}">Edit Treasury</a></li>
+        <li><a href="{% url 'edit_resources' %}">Edit Resources</a></li>
         <li><a href="{% url 'edit_land' %}">Edit Land</a></li>
         <li><a href="{% url 'edit_population' %}">Edit Population</a></li>
     </ul>
