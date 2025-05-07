@@ -256,8 +256,8 @@ def create_realm_review(request):
             'ruler': realm.ruler,
             'treasury': realm.treasury,
             'resources': realm.resources,
-            'land_units': list(realm.land_units.values('name', 'unit_type__name')),
-            'population_units': list(realm.population_units.values('race__name'))
+            'land_units': realm.land_units.values,
+            'population_units': realm.population_units.values
         }
     else:
         print(f"This is triggered")
