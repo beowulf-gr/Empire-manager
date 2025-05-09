@@ -109,6 +109,12 @@ def create_realm_step_4(request):
             # Extract cleaned data
             name = form.cleaned_data['name']
             unit_type = form.cleaned_data['unit_type']
+            
+            # prod_choice = form.cleaned_data.get('production_choice')
+            # if prod_choice:
+            #     import ast
+            #     production = ast.literal_eval(prod_choice)
+            # else:
             production = unit_type.production or {}
             
             # Get the session data (new_realm)
@@ -543,4 +549,15 @@ def edit_population(request, realm_name=None):
                 request.session['new_realm'] = realm_data
                 return redirect(reverse('create_realm_review'))
 
+            # Redirect to the review page after saving
+            return redirect(
+                f"{reverse('create_realm_review')}?realm_name={realm.name}"
+                if realm_name else reverse('create_realm_review')
+            )
+
     return render(request, 'realms/edit/edit_population.html', {'formset': formset})
+
+
+
+
+

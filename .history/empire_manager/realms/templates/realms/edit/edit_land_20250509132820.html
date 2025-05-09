@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head><title>Edit Land</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+</head>
+<body>
+    <h1>Edit Land</h1>
+
+    <p>Formset total forms: {{ formset.total_form_count }}</p>
+    <p>Formset initial forms: {{ formset.initial_form_count }}</p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div>
+                {{ form.as_p }}
+            </div>
+        {% endfor %}
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <p><a href="{% url 'create_realm_review' %}?realm_name={{ realm.name }}">Back to Review</a></p>
+
+</body>
+</html>

@@ -109,6 +109,12 @@ def create_realm_step_4(request):
             # Extract cleaned data
             name = form.cleaned_data['name']
             unit_type = form.cleaned_data['unit_type']
+            
+            # prod_choice = form.cleaned_data.get('production_choice')
+            # if prod_choice:
+            #     import ast
+            #     production = ast.literal_eval(prod_choice)
+            # else:
             production = unit_type.production or {}
             
             # Get the session data (new_realm)
@@ -459,7 +465,6 @@ def edit_land(request, realm_name=None):
                     elif form.cleaned_data.get('DELETE', False) and form.instance.pk:
                         # If the form is marked for deletion, delete the instance
                         form.instance.delete()
-                return redirect('realm_detail', name=realm.name)  # Go back to the realm details
             else:
                 realm_data['land_units'] = [
                     {
@@ -469,12 +474,11 @@ def edit_land(request, realm_name=None):
                     for form in formset if form.cleaned_data and not form.cleaned_data.get('DELETE', False)
                 ]
                 request.session['new_realm'] = realm_data
-                return redirect(reverse('create_realm_review'))
 
-            # return redirect(
-            #     f"{reverse('create_realm_review')}?realm_name={realm.name}"
-            #     if realm_name else reverse('create_realm_review')
-            # )
+            return redirect(
+                f"{reverse('create_realm_review')}?realm_name={realm.name}"
+                if realm_name else reverse('create_realm_review')
+            )
 
     return render(request, 'realms/edit/edit_land.html', {'formset': formset})
 
@@ -531,7 +535,6 @@ def edit_population(request, realm_name=None):
                     elif form.cleaned_data.get('DELETE', False) and form.instance.pk:
                         # If the form is marked for deletion, delete the instance
                         form.instance.delete()
-                return redirect('realm_detail', name=realm.name)  # Go back to the realm details
             else:
                 # If creating a new realm, store the changes in session
                 realm_data['population_units'] = [
@@ -541,6 +544,16 @@ def edit_population(request, realm_name=None):
                     for form in formset if form.cleaned_data and not form.cleaned_data.get('DELETE', False)
                 ]
                 request.session['new_realm'] = realm_data
-                return redirect(reverse('create_realm_review'))
+
+            # Redirect to the review page after saving
+            return redirect(
+                f"{reverse('create_realm_review')}?realm_name={realm.name}"
+                if realm_name else reverse('create_realm_review')
+            )
 
     return render(request, 'realms/edit/edit_population.html', {'formset': formset})
+
+
+
+
+
