@@ -122,7 +122,7 @@ def realm_create_automatic(request):
                 realm_name = realm_name_input
             else:
                 name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Hold", "Lands"]
-                realm_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
+                random_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
 
             # Initialize starting resources
             starting_resources = {
@@ -139,8 +139,8 @@ def realm_create_automatic(request):
 
             # Create the new realm object
             new_realm = Realm.objects.create(
-                name=realm_name,
-                ruler=ruler_name,
+                name=random_name,
+                ruler='Grond',
                 treasury=0, # Initialize treasury to 0 for now
                 resources=starting_resources.copy(), # Initialize with empty resources
             )

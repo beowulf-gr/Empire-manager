@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Realm, LandUnit, PopulationUnit, LandUnitType, MINERAL_SUBTYPES
+from .models import Realm, LandUnit, PopulationUnit, LandUnitType
 from django.http import HttpResponse, Http404
 from django.contrib import messages
 from .forms import RealmInfoForm, TreasuryForm, ResourcesForm, LandUnitForm, PopulationUnitForm, PopulationRace
@@ -14,198 +14,34 @@ def delete_realm(request, name):
     realm.delete()  # This will cascade delete if you set up ForeignKeys with on_delete=models.CASCADE
     return redirect('realm_list')
 
-def _assign_mineral_type():
-    roll = random.randint(1, 100)
-    total = 0
-    for mineral, chance in MINERAL_SUBTYPES:
-        total += chance
-        if roll <= total:
-            return mineral
-    return "Iron"  # Default if no match
-
 def realm_create_automatic(request):
-    if request.method == 'GET':
-        domain_type = request.GET.get('domain')
-        realm_name_input = request.GET.get('realm_name')
-        ruler_name = request.GET.get('ruler_name')
-        if domain_type in ["Standard", "Coastal", "Desert", "Forest", "Hills", "Mountains"]:
-            name_prefixes = []
-            starting_land_units_config = {}
+    if request.method == 'POST': # Or potentially just on a GET request if you prefer
+        # 1. Generate a random name
+        name_prefixes = ["Great", "Dark", "Silver", "Golden", "Whispering", "Ancient"]
+        name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Lands", "Marches"]
+        random_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
 
-            if domain_type == "Standard":
-                name_prefixes = ["Central", "Green", "Prosperous"]
-                starting_land_units_config = {
-                    "Forest": 5,
-                    "Hills - Stone": 1,
-                    "Plains": 10,
-                    "Mountains - Stone": 0,
-                    "Ruins": 0,
-                    "Swamp": 1,
-                    "Wasteland": 0,
-                    "Water": 2,
-                    "Hills - Minerals": 1,
-                    "Mountains - Minerals": 0,
-                }
-            elif domain_type == "Coastal":
-                name_prefixes = ["Seaside", "Azure", "Port"]
-                starting_land_units_config = {
-                    "Forest": 2,
-                    "Hills - Stone": 0,
-                    "Plains": 7,
-                    "Mountains - Stone": 0,
-                    "Ruins": 0,
-                    "Swamp": 3,
-                    "Wasteland": 0,
-                    "Water": 8,
-                    "Hills - Minerals": 0,
-                    "Mountains - Minerals": 0,
-                }
-            elif domain_type == "Desert":
-                name_prefixes = ["Sandy", "Oasis", "Sunstone"]
-                starting_land_units_config = {
-                    "Forest": 2,
-                    "Hills - Stone": 1,
-                    "Plains": 8,
-                    "Mountains - Stone": 1,
-                    "Ruins": 0,
-                    "Swamp": 0,
-                    "Wasteland": 5,
-                    "Water": 1,
-                    "Hills - Minerals": 1,
-                    "Mountains - Minerals": 1,
-                }
-            elif domain_type == "Forest":
-                name_prefixes = ["Whispering", "Greenwood", "Sylvani"]
-                starting_land_units_config = {
-                    "Forest": 10,
-                    "Hills - Stone": 1,
-                    "Plains": 6,
-                    "Mountains - Stone": 0,
-                    "Ruins": 1,
-                    "Swamp": 1,
-                    "Wasteland": 0,
-                    "Water": 0,
-                    "Hills - Minerals": 1,
-                    "Mountains - Minerals": 0,
-                }
-            elif domain_type == "Hills":
-                name_prefixes = ["Rolling", "High", "Windy"]
-                starting_land_units_config = {
-                    "Forest": 4,
-                    "Hills - Stone": 4,
-                    "Plains": 6,
-                    "Mountains - Stone": 1,
-                    "Ruins": 0,
-                    "Swamp": 0,
-                    "Wasteland": 0,
-                    "Water": 0,
-                    "Hills - Minerals": 4,
-                    "Mountains - Minerals": 1,
-                }
-            elif domain_type == "Mountains":
-                name_prefixes = ["Peak", "Stonecrown", "Ironhold"]
-                starting_land_units_config = {
-                    "Forest": 3,
-                    "Hills - Stone": 1,
-                    "Plains": 4,
-                    "Mountains - Stone": 3,
-                    "Ruins": 1,
-                    "Swamp": 0,
-                    "Wasteland": 4,
-                    "Water": 0,
-                    "Hills - Minerals": 1,
-                    "Mountains - Minerals": 3,
-                }
+        # 2. Generate random resources (example: gold, wood, food)
+        starting_gold = random.randint(100, 500)
+        starting_wood = random.randint(50, 200)
+        starting_food = random.randint(75, 300)
 
-            # Generate realm name
-            if realm_name_input:
-                realm_name = realm_name_input
-            else:
-                name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Hold", "Lands"]
-                realm_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
+        # 3. Create the new realm object
+        new_realm = Realm.objects.create(
+            name=random_name,
+            ruler=request.user, # Assuming the logged-in user is the ruler
+            gold=starting_gold,
+            wood=starting_wood,
+            food=starting_food,
+            # Add other fields as needed with random values or defaults
+        )
 
-            # Initialize starting resources
-            starting_resources = {
-                'Food': 0,
-                'Wood': 0,
-                'Stone': 0,
-                'Adamantine': 0,
-                'Copper': 0,
-                'Gold': 0,
-                'Iron': 0,
-                'Mithral': 0,
-                'Silver': 0,
-            }
-
-            # Create the new realm object
-            new_realm = Realm.objects.create(
-                name=realm_name,
-                ruler=ruler_name,
-                treasury=0, # Initialize treasury to 0 for now
-                resources=starting_resources.copy(), # Initialize with empty resources
-            )
-
-            # --- Generate initial Land Units and calculate starting resources ---
-            for unit_type_name, quantity in starting_land_units_config.items():
-                try:
-                    land_unit_type = LandUnitType.objects.get(name=unit_type_name)
-                    for i in range(quantity):
-                        LandUnit.objects.create(
-                            name=f"{land_unit_type.name} #{i+1}",
-                            unit_type=land_unit_type,
-                            realm=new_realm,
-                        )
-                        # Update starting resources based on land unit production
-                        production = land_unit_type.production
-                        if production:
-                            produced_resource = random.choice(list(production.keys()))
-                            if produced_resource == 'minerals':
-                                produced_resource = _assign_mineral_type()
-                            if produced_resource in starting_resources:
-                                starting_resources[produced_resource] = starting_resources.get(produced_resource, 0) + 1
-                            # If the produced resource is not in our list, it will be ignored.
-                except LandUnitType.DoesNotExist:
-                    print(f"Warning: LandUnitType '{unit_type_name}' not found.")
-
-            # Update the realm's resources with the calculated starting amounts
-            new_realm.resources = starting_resources
-            new_realm.save()
-
-            # --- Generate initial Population Units (based on food production) ---
-            total_potential_food = 0
-            land_units = LandUnit.objects.filter(realm=new_realm) # Get the land units we just created for this realm.
-
-            for land_unit in land_units:
-                # Get the LandUnitType instance to access production data.
-                land_unit_type = land_unit.unit_type
-                # Check if 'food' is a key in the production dictionary.
-                if 'Food' in land_unit_type.production:
-                    total_potential_food += land_unit_type.production['Food']
-
-            num_starting_population = int(total_potential_food * 0.5)  # 50% of potential food production
-
-            try:
-                human_race = PopulationRace.objects.get(name="Humans")  # Get the Human race.
-                for i in range(num_starting_population):
-                    PopulationUnit.objects.create(
-                        race=human_race,
-                        realm=new_realm,
-                    )
-            except PopulationRace.DoesNotExist:
-                print("Warning: PopulationRace 'Human' not found.  Creating 0 population.")
-                # Handle the case where the "Human" race doesn't exist.  You might
-                # want to create a default human race, or log an error and handle
-                # it appropriately for your game.  For now, I'll create 0 population.
-
-            return redirect('realm_detail', name=new_realm.name)
-        else:
-            return redirect('realm_list')
-
-    elif request.method == 'POST':
-        pass
-
+        # 4. Redirect to the new realm's view (assuming you have a view named 'realm_detail')
+        return redirect(reverse('realm_detail', kwargs={'pk': new_realm.id}))
     else:
-        return redirect('realm_list')
+        # You might want to handle cases where someone directly accesses this URL with a GET request
+        # For now, let's just redirect to the main page or display an error.
+        return redirect('realms/realm_list.html') # Replace 'some_homepage' with your actual homepage URL name
 
 
 # List all realms
@@ -292,15 +128,15 @@ def create_realm_step_3(request):
             return redirect('create_realm_step_4')
     else:
         default_data = {
-            'Food': 0,
-            'Wood': 0,
-            'Stone': 0,
-            'Adamantine': 0,
-            'Copper': 0,
-            'Gold': 0,
-            'Iron': 0,
-            'Mithral': 0,
-            'Silver': 0,
+            'food': 0,
+            'wood': 0,
+            'stone': 0,
+            'adamantine': 0,
+            'copper': 0,
+            'gold': 0,
+            'iron': 0,
+            'mithral': 0,
+            'silver': 0,
         }
         session_data = request.session.get('new_realm', {}).get('resources', {})
         default_data.update(session_data)  # session_data can override defaults

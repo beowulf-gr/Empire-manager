@@ -26,8 +26,6 @@ def _assign_mineral_type():
 def realm_create_automatic(request):
     if request.method == 'GET':
         domain_type = request.GET.get('domain')
-        realm_name_input = request.GET.get('realm_name')
-        ruler_name = request.GET.get('ruler_name')
         if domain_type in ["Standard", "Coastal", "Desert", "Forest", "Hills", "Mountains"]:
             name_prefixes = []
             starting_land_units_config = {}
@@ -118,29 +116,26 @@ def realm_create_automatic(request):
                 }
 
             # Generate realm name
-            if realm_name_input:
-                realm_name = realm_name_input
-            else:
-                name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Hold", "Lands"]
-                realm_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
+            name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Hold", "Lands"]
+            random_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
 
             # Initialize starting resources
             starting_resources = {
-                'Food': 0,
-                'Wood': 0,
-                'Stone': 0,
-                'Adamantine': 0,
-                'Copper': 0,
-                'Gold': 0,
-                'Iron': 0,
-                'Mithral': 0,
-                'Silver': 0,
+                'food': 0,
+                'wood': 0,
+                'stone': 0,
+                'adamantine': 0,
+                'copper': 0,
+                'gold': 0,
+                'iron': 0,
+                'mithral': 0,
+                'silver': 0,
             }
 
             # Create the new realm object
             new_realm = Realm.objects.create(
-                name=realm_name,
-                ruler=ruler_name,
+                name=random_name,
+                ruler='Grond',
                 treasury=0, # Initialize treasury to 0 for now
                 resources=starting_resources.copy(), # Initialize with empty resources
             )
@@ -161,9 +156,7 @@ def realm_create_automatic(request):
                             produced_resource = random.choice(list(production.keys()))
                             if produced_resource == 'minerals':
                                 produced_resource = _assign_mineral_type()
-                            if produced_resource in starting_resources:
-                                starting_resources[produced_resource] = starting_resources.get(produced_resource, 0) + 1
-                            # If the produced resource is not in our list, it will be ignored.
+                            starting_resources[produced_resource] = starting_resources.get(produced_resource, 0) + 1
                 except LandUnitType.DoesNotExist:
                     print(f"Warning: LandUnitType '{unit_type_name}' not found.")
 
@@ -179,13 +172,13 @@ def realm_create_automatic(request):
                 # Get the LandUnitType instance to access production data.
                 land_unit_type = land_unit.unit_type
                 # Check if 'food' is a key in the production dictionary.
-                if 'Food' in land_unit_type.production:
-                    total_potential_food += land_unit_type.production['Food']
+                if 'food' in land_unit_type.production:
+                    total_potential_food += land_unit_type.production['food']
 
             num_starting_population = int(total_potential_food * 0.5)  # 50% of potential food production
 
             try:
-                human_race = PopulationRace.objects.get(name="Humans")  # Get the Human race.
+                human_race = PopulationRace.objects.get(name="Human")  # Get the Human race.
                 for i in range(num_starting_population):
                     PopulationUnit.objects.create(
                         race=human_race,
@@ -292,15 +285,15 @@ def create_realm_step_3(request):
             return redirect('create_realm_step_4')
     else:
         default_data = {
-            'Food': 0,
-            'Wood': 0,
-            'Stone': 0,
-            'Adamantine': 0,
-            'Copper': 0,
-            'Gold': 0,
-            'Iron': 0,
-            'Mithral': 0,
-            'Silver': 0,
+            'food': 0,
+            'wood': 0,
+            'stone': 0,
+            'adamantine': 0,
+            'copper': 0,
+            'gold': 0,
+            'iron': 0,
+            'mithral': 0,
+            'silver': 0,
         }
         session_data = request.session.get('new_realm', {}).get('resources', {})
         default_data.update(session_data)  # session_data can override defaults

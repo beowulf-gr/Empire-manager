@@ -7,16 +7,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         land_unit_types = [
-            {"name": "Forest", "production": {"Wood": 4, "Food": 1}, "harvest": 1, "settlement_capacity": 2},
-            {"name": "Hills - Stone", "production": {"Stone": 2}, "harvest": 3, "settlement_capacity": 1},
+            {"name": "Forest", "production": {"wood": 4, "food": 1}, "harvest": 1, "settlement_capacity": 2},
+            {"name": "Hills - Stone", "production": {"stone": 2}, "harvest": 3, "settlement_capacity": 1},
             {"name": "Hills - Minerals", "production": {"minerals": 1}, "harvest": 3, "settlement_capacity": 1},
-            {"name": "Plains", "production": {"Food": 4}, "harvest": 1, "settlement_capacity": 4},
-            {"name": "Mountains - Stone", "production": {"Stone": 4}, "harvest": 2, "settlement_capacity": 2},
+            {"name": "Plains", "production": {"food": 4}, "harvest": 1, "settlement_capacity": 4},
+            {"name": "Mountains - Stone", "production": {"stone": 4}, "harvest": 2, "settlement_capacity": 2},
             {"name": "Mountains - Minerals", "production": {"minerals": 2}, "harvest": 2, "settlement_capacity": 2},
-            {"name": "Ruins", "production": {"Gold":random.randint(1, 10)-4}, "harvest": 2, "settlement_capacity": 2},
+            {"name": "Ruins", "production": {"gold":random.randint(1, 10)-4}, "harvest": 2, "settlement_capacity": 2},
             {"name": "Wasteland", "production": {}, "harvest": 0, "settlement_capacity": 1},
-            {"name": "Swamp", "production": {"Gold":1, "Food": 1}, "harvest": 2, "settlement_capacity": 1},
-            {"name": "Water", "production": {"Food":2}, "harvest": 1, "settlement_capacity": 1},
+            {"name": "Swamp", "production": {"gold":1, "food": 1}, "harvest": 2, "settlement_capacity": 1},
+            {"name": "Water", "production": {"food":2}, "harvest": 1, "settlement_capacity": 1},
         ]
 
         for unit_type in land_unit_types:

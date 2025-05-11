@@ -26,8 +26,6 @@ def _assign_mineral_type():
 def realm_create_automatic(request):
     if request.method == 'GET':
         domain_type = request.GET.get('domain')
-        realm_name_input = request.GET.get('realm_name')
-        ruler_name = request.GET.get('ruler_name')
         if domain_type in ["Standard", "Coastal", "Desert", "Forest", "Hills", "Mountains"]:
             name_prefixes = []
             starting_land_units_config = {}
@@ -118,11 +116,8 @@ def realm_create_automatic(request):
                 }
 
             # Generate realm name
-            if realm_name_input:
-                realm_name = realm_name_input
-            else:
-                name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Hold", "Lands"]
-                realm_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
+            name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Hold", "Lands"]
+            random_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
 
             # Initialize starting resources
             starting_resources = {
@@ -139,8 +134,8 @@ def realm_create_automatic(request):
 
             # Create the new realm object
             new_realm = Realm.objects.create(
-                name=realm_name,
-                ruler=ruler_name,
+                name=random_name,
+                ruler='Grond',
                 treasury=0, # Initialize treasury to 0 for now
                 resources=starting_resources.copy(), # Initialize with empty resources
             )
@@ -179,8 +174,8 @@ def realm_create_automatic(request):
                 # Get the LandUnitType instance to access production data.
                 land_unit_type = land_unit.unit_type
                 # Check if 'food' is a key in the production dictionary.
-                if 'Food' in land_unit_type.production:
-                    total_potential_food += land_unit_type.production['Food']
+                if 'food' in land_unit_type.production:
+                    total_potential_food += land_unit_type.production['food']
 
             num_starting_population = int(total_potential_food * 0.5)  # 50% of potential food production
 

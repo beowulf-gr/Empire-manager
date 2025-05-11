@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 3 - Resources</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}"></head>
+<body>
+    <h1>Step 3: Starting Resources</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Continue</button>
+    </form>
+    <a href="{% url 'create_realm_step_2' %}" class="back-link">Back</a>
+</body>
+</html>

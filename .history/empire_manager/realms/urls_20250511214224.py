@@ -31,5 +31,6 @@ urlpatterns = [
     path('realms/<str:name>/delete/', views.delete_realm, name='delete_realm'),
     path('<str:realm_name>/create_land_unit/', views.create_land_unit, name='create_land_unit'),
     path('<str:realm_name>/create_population_unit/', views.create_population_unit, name='create_population_unit'),
+    path('realms/create/', views.realm_create, name='realm_create'), # Your existing manual creation view
     path('realms/create/automatic/', views.realm_create_automatic, name='realm_create_automatic'),
 ]

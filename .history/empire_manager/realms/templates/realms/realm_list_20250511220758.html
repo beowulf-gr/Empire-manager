@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Realms</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+</head>
+<body>
+    <h1>All Realms</h1>
+    <ul>
+        {% for realm in realms %}
+            <li><a href="{% url 'realm_detail' name=realm.name %}">{{ realm.name }}</a></li>
+         {% empty %}
+            <li>You don't have any realms yet.</li>
+        {% endfor %}
+    </ul>
+
+    <button id="createNewRealmBtn">Create New Realm</button>
+
+    <div id="creationOptionsModal" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border: 1px solid black; z-index: 1000;">
+        <h3>Choose Creation Method</h3>
+        <button id="manualCreateBtn">Manual Creation</button>
+        <button id="automaticCreateBtn">Automatic (Random) Creation</button>
+        <div id="domainChoiceSection" style="display: none; margin-top: 20px;">
+        <h3>Choose Domain Type</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <button class="domainChoiceBtn" data-domain-type="Standard">Standard</button>
+            <button class="domainChoiceBtn" data-domain-type="Coastal">Coastal</button>
+            <button class="domainChoiceBtn" data-domain-type="Desert">Desert</button>
+            <button class="domainChoiceBtn" data-domain-type="Forest">Forest</button>
+            <button class="domainChoiceBtn" data-domain-type="Hills">Hills</button>
+            <button class="domainChoiceBtn" data-domain-type="Mountains">Mountains</button>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        const createNewRealmBtn = document.getElementById('createNewRealmBtn');
+        const creationOptionsModal = document.getElementById('creationOptionsModal');
+        const manualCreateBtn = document.getElementById('manualCreateBtn');
+        const automaticCreateBtn = document.getElementById('automaticCreateBtn');
+        const domainChoiceSection = document.getElementById('domainChoiceSection');
+        const domainChoiceButtons = document.querySelectorAll('.domainChoiceBtn');
+
+        createNewRealmBtn.addEventListener('click', function() {
+            creationOptionsModal.style.display = 'block';
+            domainChoiceSection.style.display = 'none'; // Initially hide the domain choice
+        });
+
+        manualCreateBtn.addEventListener('click', function() {
+            window.location.href = "{% url 'create_realm_start' %}";
+        });
+
+        automaticCreateBtn.addEventListener('click', function() {
+            domainChoiceSection.style.display = 'block'; // Show the domain choice when 'Automatic' is clicked
+        });
+
+        domainChoiceButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const domainType = this.getAttribute('data-domain-type');
+                window.location.href = "{% url 'realm_create_automatic' %}?domain=" + domainType;
+            });
+        });
+
+        creationOptionsModal.addEventListener('click', function(event) {
+            if (event.target === creationOptionsModal) {
+                creationOptionsModal.style.display = 'none';
+                domainChoiceSection.style.display = 'none'; // Also hide domain choice when modal is closed
+            }
+        });
+    </script>
+    <!-- <a href="{% url 'create_realm_start' %}">Create a New Realm</a> -->
+</body>
+</html>

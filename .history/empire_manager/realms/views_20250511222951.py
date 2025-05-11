@@ -14,20 +14,9 @@ def delete_realm(request, name):
     realm.delete()  # This will cascade delete if you set up ForeignKeys with on_delete=models.CASCADE
     return redirect('realm_list')
 
-def _assign_mineral_type():
-    roll = random.randint(1, 100)
-    total = 0
-    for mineral, chance in MINERAL_SUBTYPES:
-        total += chance
-        if roll <= total:
-            return mineral
-    return "Iron"  # Default if no match
-
 def realm_create_automatic(request):
     if request.method == 'GET':
         domain_type = request.GET.get('domain')
-        realm_name_input = request.GET.get('realm_name')
-        ruler_name = request.GET.get('ruler_name')
         if domain_type in ["Standard", "Coastal", "Desert", "Forest", "Hills", "Mountains"]:
             name_prefixes = []
             starting_land_units_config = {}
@@ -118,29 +107,26 @@ def realm_create_automatic(request):
                 }
 
             # Generate realm name
-            if realm_name_input:
-                realm_name = realm_name_input
-            else:
-                name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Hold", "Lands"]
-                realm_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
+            name_suffixes = ["Kingdom", "Empire", "Dominion", "Realm", "Hold", "Lands"]
+            random_name = f"{random.choice(name_prefixes)} {random.choice(name_suffixes)}"
 
             # Initialize starting resources
             starting_resources = {
-                'Food': 0,
-                'Wood': 0,
-                'Stone': 0,
-                'Adamantine': 0,
-                'Copper': 0,
-                'Gold': 0,
-                'Iron': 0,
-                'Mithral': 0,
-                'Silver': 0,
+                'food': 0,
+                'wood': 0,
+                'stone': 0,
+                'adamantine': 0,
+                'copper': 0,
+                'gold': 0,
+                'iron': 0,
+                'mithral': 0,
+                'silver': 0,
             }
 
             # Create the new realm object
             new_realm = Realm.objects.create(
-                name=realm_name,
-                ruler=ruler_name,
+                name=random_name,
+                ruler='Grond',
                 treasury=0, # Initialize treasury to 0 for now
                 resources=starting_resources.copy(), # Initialize with empty resources
             )
@@ -159,11 +145,7 @@ def realm_create_automatic(request):
                         production = land_unit_type.production
                         if production:
                             produced_resource = random.choice(list(production.keys()))
-                            if produced_resource == 'minerals':
-                                produced_resource = _assign_mineral_type()
-                            if produced_resource in starting_resources:
-                                starting_resources[produced_resource] = starting_resources.get(produced_resource, 0) + 1
-                            # If the produced resource is not in our list, it will be ignored.
+                            starting_resources[produced_resource] = starting_resources.get(produced_resource, 0) + 1
                 except LandUnitType.DoesNotExist:
                     print(f"Warning: LandUnitType '{unit_type_name}' not found.")
 
@@ -171,33 +153,36 @@ def realm_create_automatic(request):
             new_realm.resources = starting_resources
             new_realm.save()
 
-            # --- Generate initial Population Units (based on food production) ---
-            total_potential_food = 0
-            land_units = LandUnit.objects.filter(realm=new_realm) # Get the land units we just created for this realm.
-
-            for land_unit in land_units:
-                # Get the LandUnitType instance to access production data.
-                land_unit_type = land_unit.unit_type
-                # Check if 'food' is a key in the production dictionary.
-                if 'Food' in land_unit_type.production:
-                    total_potential_food += land_unit_type.production['Food']
-
-            num_starting_population = int(total_potential_food * 0.5)  # 50% of potential food production
-
-            try:
-                human_race = PopulationRace.objects.get(name="Humans")  # Get the Human race.
-                for i in range(num_starting_population):
+            # --- Generate initial Population Units (can still be random for now) ---
+            num_starting_population = random.randint(4, 10)
+            available_races = PopulationRace.objects.all()
+            for i in range(num_starting_population):
+                if available_races:
+                    race = random.choice(available_races)
                     PopulationUnit.objects.create(
-                        race=human_race,
+                        race=race,
                         realm=new_realm,
                     )
-            except PopulationRace.DoesNotExist:
-                print("Warning: PopulationRace 'Human' not found.  Creating 0 population.")
-                # Handle the case where the "Human" race doesn't exist.  You might
-                # want to create a default human race, or log an error and handle
-                # it appropriately for your game.  For now, I'll create 0 population.
 
-            return redirect('realm_detail', name=new_realm.name)
+            # Basic population assignment
+            unassigned_population = list(PopulationUnit.objects.filter(realm=new_realm, assigned_to=None))
+            land_units = list(LandUnit.objects.filter(realm=new_realm))
+            random.shuffle(unassigned_population)
+            random.shuffle(land_units)
+            land_unit_index = 0
+            for pop_unit in unassigned_population:
+                if land_unit_index < len(land_units) and len(land_units[land_unit_index].assigned_population) < land_units[land_unit_index].unit_type.settlement_capacity:
+                    land_unit = land_units[land_unit_index]
+                    land_unit.assigned_population.append({"race": pop_unit.race.name})
+                    land_unit.save()
+                    pop_unit.assigned_to = land_unit
+                    pop_unit.save()
+                    if len(land_units[land_unit_index].assigned_population) >= land_units[land_unit_index].unit_type.settlement_capacity:
+                        land_unit_index += 1
+                else:
+                    break
+
+            return redirect(reverse('realm_detail', kwargs={'pk': new_realm.id}))
         else:
             return redirect('realm_list')
 
@@ -206,12 +191,6 @@ def realm_create_automatic(request):
 
     else:
         return redirect('realm_list')
-
-
-# List all realms
-def realm_list(request):
-    realms = Realm.objects.all()  # Retrieve all realms
-    return render(request, 'realms/realm_list.html', {'realms': realms})
 
 # Create a new realm
 # def create_realm(request):
@@ -292,15 +271,15 @@ def create_realm_step_3(request):
             return redirect('create_realm_step_4')
     else:
         default_data = {
-            'Food': 0,
-            'Wood': 0,
-            'Stone': 0,
-            'Adamantine': 0,
-            'Copper': 0,
-            'Gold': 0,
-            'Iron': 0,
-            'Mithral': 0,
-            'Silver': 0,
+            'food': 0,
+            'wood': 0,
+            'stone': 0,
+            'adamantine': 0,
+            'copper': 0,
+            'gold': 0,
+            'iron': 0,
+            'mithral': 0,
+            'silver': 0,
         }
         session_data = request.session.get('new_realm', {}).get('resources', {})
         default_data.update(session_data)  # session_data can override defaults

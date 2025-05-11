@@ -140,7 +140,7 @@ def realm_create_automatic(request):
             # Create the new realm object
             new_realm = Realm.objects.create(
                 name=realm_name,
-                ruler=ruler_name,
+                ruler='Grond',
                 treasury=0, # Initialize treasury to 0 for now
                 resources=starting_resources.copy(), # Initialize with empty resources
             )

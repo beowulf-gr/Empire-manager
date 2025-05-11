@@ -63,7 +63,7 @@
         });
 
         manualCreateBtn.addEventListener('click', function() {
-            window.location.href = "{% url 'create_realm_start' %}";
+            window.location.href = "{% url 'realm_create' %}";
         });
 
         automaticCreateBtn.addEventListener('click', function() {
@@ -84,14 +84,10 @@
             if (selectedDomain) {
                 const realmName = document.getElementById('realmName').value;
                 const rulerName = document.getElementById('rulerName').value;
-                if (rulerName) { // Ruler name is required
-                    let url = "{% url 'realm_create_automatic' %}?domain=" + selectedDomain + "&ruler_name=" + rulerName;
-                    if (realmName) {
-                        url += "&realm_name=" + realmName;
-                    }
-                    window.location.href = url;
+                if (realmName && rulerName) {
+                    window.location.href = "{% url 'realm_create_automatic' %}?domain=" + selectedDomain + "&realm_name=" + realmName + "&ruler_name=" + rulerName;
                 } else {
-                    alert("Please enter a ruler name.");
+                    alert("Please enter both a realm name and a ruler name.");
                 }
             } else {
                 alert("Please select a realm type first.");
