@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head><title>Edit Land</title>
+<head><title>Edit Population</title>
     {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const addBtn = document.getElementById("add-form-btn");
@@ -19,32 +19,19 @@
     </script>
 </head>
 <body>
-    <h1>Edit Land</h1>
+    <h1>Edit Population</h1>
 
     <form method="POST">
         {% csrf_token %}
         {{ formset.management_form }}
-
-        <div id="formset-container">
-            {% for form in formset %}
-                <div class="form-block">
-                    {{ form.as_p }}
-                    {% if form.can_delete %}
-                        <label>{{ form.DELETE }} Delete</label>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-
-        <!-- Template for new forms -->
-        <div id="empty-form" style="display: none;">
-            <div class="form-block">
-                {{ formset.empty_form.as_p }}
+        {% for form in formset %}
+            <div class="unit-form">
+                {{ form.as_p }}
             </div>
-        </div>
-
+        {% endfor %}
         <button type="button" id="add-form-btn">Add More</button>
         <button type="submit">Save Changes</button>
+    </form>
 
     <p><a href="{% url 'create_realm_review' %}?realm_name={{ realm.name }}">Back to Review</a></p>
 

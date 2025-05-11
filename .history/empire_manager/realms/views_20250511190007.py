@@ -5,14 +5,6 @@ from django.contrib import messages
 from .forms import RealmInfoForm, TreasuryForm, ResourcesForm, LandUnitForm, PopulationUnitForm, PopulationRace
 from django.forms import formset_factory, modelformset_factory
 from django.urls import reverse
-from django.views.decorators.http import require_POST
-
-@require_POST
-def delete_realm(request, name):
-    realm = get_object_or_404(Realm, name=name)
-    realm.delete()  # This will cascade delete if you set up ForeignKeys with on_delete=models.CASCADE
-    return redirect('realm_list')
-
 
 # List all realms
 def realm_list(request):
@@ -88,7 +80,7 @@ def create_realm_step_2(request):
 
 def create_realm_step_3(request):
     if request.method == "POST":
-        form = ResourcesForm(request.POST, )
+        form = ResourcesForm(request.POST)
         if form.is_valid():
             data = request.session.get('new_realm', {}).copy()
             data['resources'] = form.cleaned_data
@@ -97,20 +89,9 @@ def create_realm_step_3(request):
             print(f"Session after resources step: {request.session.get('new_realm')}")
             return redirect('create_realm_step_4')
     else:
-        default_data = {
-            'food': 0,
-            'wood': 0,
-            'stone': 0,
-            'adamantine': 0,
-            'copper': 0,
-            'gold': 0,
-            'iron': 0,
-            'mithral': 0,
-            'silver': 0,
-        }
-        session_data = request.session.get('new_realm', {}).get('resources', {})
-        default_data.update(session_data)  # session_data can override defaults
-        form = ResourcesForm(initial=default_data)
+        # Pre-fill form with session data if available
+        initial_data = request.session.get('new_realm', {}).get('resources', {})
+        form = ResourcesForm(initial=initial_data)
 
     return render(request, 'realms/steps/step_3_resources.html', {'form': form})
 
@@ -432,7 +413,7 @@ def edit_land(request, realm_name=None):
         LandUnitFormSet = modelformset_factory(
             LandUnit,
             form=LandUnitForm,
-            extra=0,
+            extra=max(1, len(initial_data)),
             can_delete=True
         )
         formset = LandUnitFormSet(queryset=land_units)
@@ -503,7 +484,7 @@ def edit_population(request, realm_name=None):
         PopulationUnitFormSet = modelformset_factory(
             PopulationUnit,
             form=PopulationUnitForm,
-            extra=0,
+            extra=max(1, len(initial_data)),  # No extra blank forms
             can_delete=True  # Enable deletion of population units
         )
         formset = PopulationUnitFormSet(queryset=population_units)

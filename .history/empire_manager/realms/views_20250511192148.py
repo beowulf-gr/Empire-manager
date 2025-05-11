@@ -5,14 +5,6 @@ from django.contrib import messages
 from .forms import RealmInfoForm, TreasuryForm, ResourcesForm, LandUnitForm, PopulationUnitForm, PopulationRace
 from django.forms import formset_factory, modelformset_factory
 from django.urls import reverse
-from django.views.decorators.http import require_POST
-
-@require_POST
-def delete_realm(request, name):
-    realm = get_object_or_404(Realm, name=name)
-    realm.delete()  # This will cascade delete if you set up ForeignKeys with on_delete=models.CASCADE
-    return redirect('realm_list')
-
 
 # List all realms
 def realm_list(request):

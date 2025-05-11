@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head><title>Edit Land</title>
+<head><title>Edit Population</title>
     {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const addBtn = document.getElementById("add-form-btn");
@@ -19,7 +19,7 @@
     </script>
 </head>
 <body>
-    <h1>Edit Land</h1>
+    <h1>Edit Population</h1>
 
     <form method="POST">
         {% csrf_token %}
@@ -40,11 +40,15 @@
         <div id="empty-form" style="display: none;">
             <div class="form-block">
                 {{ formset.empty_form.as_p }}
+                {% if formset.can_delete %}
+                    <label>{{ formset.empty_form.DELETE }} Delete</label>
+                {% endif %}
             </div>
         </div>
 
         <button type="button" id="add-form-btn">Add More</button>
         <button type="submit">Save Changes</button>
+    </form>
 
     <p><a href="{% url 'create_realm_review' %}?realm_name={{ realm.name }}">Back to Review</a></p>
 

@@ -24,27 +24,26 @@
     <form method="POST">
         {% csrf_token %}
         {{ formset.management_form }}
-
-        <div id="formset-container">
-            {% for form in formset %}
-                <div class="form-block">
-                    {{ form.as_p }}
-                    {% if form.can_delete %}
-                        <label>{{ form.DELETE }} Delete</label>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-
-        <!-- Template for new forms -->
-        <div id="empty-form" style="display: none;">
-            <div class="form-block">
-                {{ formset.empty_form.as_p }}
+        {% for form in formset %}
+            <div>
+                {{ form.as_p }}
             </div>
-        </div>
-
-        <button type="button" id="add-form-btn">Add More</button>
+        {% endfor %}
         <button type="submit">Save Changes</button>
+    </form>
+
+    <script>
+        const addBtn = document.getElementById("add-form-btn");
+        const container = document.getElementById("formset-container");
+        const totalForms = document.getElementById("id_form-TOTAL_FORMS");
+
+        addBtn.addEventListener("click", function () {
+            const currentFormCount = parseInt(totalForms.value);
+            const newFormHtml = container.children[0].outerHTML.replace(/form-(\d)-/g, `form-${currentFormCount}-`);
+            container.insertAdjacentHTML('beforeend', newFormHtml);
+            totalForms.value = currentFormCount + 1;
+        });
+    </script>
 
     <p><a href="{% url 'create_realm_review' %}?realm_name={{ realm.name }}">Back to Review</a></p>
 
