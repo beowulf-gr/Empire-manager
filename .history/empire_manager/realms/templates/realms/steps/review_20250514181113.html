@@ -18,7 +18,7 @@
         </li>
         <li><strong>Land:</strong>
             <ul>
-                {% for unit_type, count in land_unit_summary.items %}
+                {% for unit_type, count in realm.land_unit_summary.items %}
                     <li>{{ unit_type }} x{{ count }}</li>
                 {% empty %}
                     <li>No land units.</li>
@@ -36,11 +36,12 @@
         </li>
         <li><strong>Population:</strong>
             <ul>
-                {% for race, count in population_unit_summary.items %}
+                {% for race, count in realm.population_unit_summary.items %}
                     <li>{{ race }} x{{ count }}</li>
                 {% empty %}
                     <li>No population units.</li>
                 {% endfor %}
+        =65
      </ul>
             <!-- {% if realm.population_units %}
                 <ul>

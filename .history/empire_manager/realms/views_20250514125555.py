@@ -409,16 +409,13 @@ def create_realm_review(request):
                 )
 
             for pop in data.get('population_units', []):
-                race_name = pop['race'] if isinstance(pop['race'], str) else pop['race']['name']
-                race = PopulationRace.objects.get(name=race_name)
                 PopulationUnit.objects.create(
                     realm=realm,
-                    race=race
+                    race=pop['race']
                 )
 
             # Cleanup session as we no longer need it for existing realms
             del request.session['new_realm']
-            return redirect('realm_detail', name=realm.name)
         else:    
             realm = Realm.objects.create(
                 name=data['name'],
@@ -457,48 +454,18 @@ def create_realm_review(request):
     }
 
     if realm:
-        land_units = realm.land_units.values('unit_type__name')
-        population_units = realm.population_units.values('race__name')
-
-        land_unit_summary = {}
-        for unit in land_units:
-            unit_type = unit['unit_type__name']
-            land_unit_summary[unit_type] = land_unit_summary.get(unit_type, 0) + 1
-
-        population_unit_summary = {}
-        for unit in population_units:
-            race = unit['race__name']
-            population_unit_summary[race] = population_unit_summary.get(race, 0) + 1
-
+        print(f"This one is triggered")
         context["realm"] = {
             'name': realm.name,
             'ruler': realm.ruler,
             'treasury': realm.treasury,
             'resources': realm.resources,
-            'land_unit_summary': land_unit_summary,
-            'population_unit_summary': population_unit_summary,
-            # 'land_units': list(realm.land_units.values('name', 'unit_type__name')),
-            # 'population_units': list(realm.population_units.values('race__name'))
+            'land_units': list(realm.land_units.values('name', 'unit_type__name')),
+            'population_units': list(realm.population_units.values('race__name'))
         }
     else:
-        # context["realm"] = request.session.get('new_realm', {})
-        realm_data = request.session.get('new_realm', {})
-        land_units_data = realm_data.get('land_units', [])
-        population_units_data = realm_data.get('population_units', [])
-
-        land_unit_summary = {}
-        for land in land_units_data:
-            unit_type = land.get('unit_type')
-            land_unit_summary[unit_type] = land_unit_summary.get(unit_type, 0) + 1
-
-        population_unit_summary = {}
-        for pop in population_units_data:
-            race = pop.get('race') if isinstance(pop.get('race'), str) else pop.get('race', {}).get('name')
-            population_unit_summary[race] = population_unit_summary.get(race, 0) + 1
-
-        context["realm"] = realm_data
-        context["land_unit_summary"] = land_unit_summary
-        context["population_unit_summary"] = population_unit_summary
+        print(f"This is triggered")
+        context["realm"] = request.session.get('new_realm', {})
 
     return render(request, 'realms/steps/review.html', context)
 

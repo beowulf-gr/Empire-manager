@@ -481,24 +481,7 @@ def create_realm_review(request):
             # 'population_units': list(realm.population_units.values('race__name'))
         }
     else:
-        # context["realm"] = request.session.get('new_realm', {})
-        realm_data = request.session.get('new_realm', {})
-        land_units_data = realm_data.get('land_units', [])
-        population_units_data = realm_data.get('population_units', [])
-
-        land_unit_summary = {}
-        for land in land_units_data:
-            unit_type = land.get('unit_type')
-            land_unit_summary[unit_type] = land_unit_summary.get(unit_type, 0) + 1
-
-        population_unit_summary = {}
-        for pop in population_units_data:
-            race = pop.get('race') if isinstance(pop.get('race'), str) else pop.get('race', {}).get('name')
-            population_unit_summary[race] = population_unit_summary.get(race, 0) + 1
-
-        context["realm"] = realm_data
-        context["land_unit_summary"] = land_unit_summary
-        context["population_unit_summary"] = population_unit_summary
+        context["realm"] = request.session.get('new_realm', {})
 
     return render(request, 'realms/steps/review.html', context)
 
