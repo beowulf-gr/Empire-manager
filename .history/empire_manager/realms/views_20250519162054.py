@@ -502,7 +502,8 @@ def create_realm_review(request):
             'resources': realm.resources,
             'land_unit_summary': land_unit_summary,
             'population_unit_summary': population_unit_summary,
-            'scale': realm.scale, # Include the scale in the context for display if needed
+            # 'land_units': list(realm.land_units.values('name', 'unit_type__name')),
+            # 'population_units': list(realm.population_units.values('race__name'))
         }
     else:
         # context["realm"] = request.session.get('new_realm', {})

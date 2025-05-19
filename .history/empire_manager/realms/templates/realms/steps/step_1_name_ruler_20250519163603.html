@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 1 - Realm Info</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+</head>
+<body>
+    <h1>Step 1: Realm Info</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="name">Realm Name:</label>
+        <input type="text" name="name" id="name" required><br><br>
+
+        <label for="ruler">Ruler Name:</label>
+        <input type="text" name="ruler" id="ruler" required><br><br>
+
+        <label for="realm_scale">Realm Scale:</label>
+        <select name="realm_scale" id="realm_scale" required>
+            <option value="" disabled selected>Select Realm Scale</option>
+            {% for scale in realm_scales %}
+                <option value="{{ scale.id }}">{{ scale.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        {% if messages %}
+            {% for message in messages %}
+                <<p class="message {% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
+        <button type="submit">Next</button>
+    </form>
+</body>
+</html>

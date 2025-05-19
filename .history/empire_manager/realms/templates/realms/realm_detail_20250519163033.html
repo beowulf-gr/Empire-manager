@@ -9,15 +9,15 @@
 </head>
 <body>
     <h1>{{ realm.name }} - Details</h1>
-    <p><strong>Ruler:</strong> {{ realm.ruler }}</p>
-    <p><strong>Realm Scale:</strong> {{ realm.scale.name }}. {{ realm.scale.description }}</p>
+    <p>Ruler: {{ realm.ruler }}</p>
+    <p>Realm Scale: {{ realm.scale.name }}. {{ realm.scale.description }}</p>
     <ul>
         <li><strong>Population Units:</strong> {{ realm.scale.pop_unit_size }} people</li>
         <li><strong>Gold Units:</strong> {{ realm.scale.gold_unit_value }} GP</li>
         <li><strong>Land Units:</strong> {{ realm.scale.land_unit_size }} square miles</li>
     </ul>
-    <p><strong>Season:</strong> {{ realm.season }}</p>
-    <p><strong>Year:</strong> {{ realm.year }}</p>
+    <p>Season: {{ realm.season }}</p>
+    <p>Year: {{ realm.year }}</p>
 
     <h2>Treasury</h2>
     {{ realm.treasury }} Gold Units
