@@ -283,7 +283,7 @@ def create_realm_step_1(request):
             except RealmScale.DoesNotExist:
                 messages.error(request, "Invalid realm scale selected.")
 
-    return render(request, 'realms/steps/step_1_name_ruler.html', {'realm_scales': realm_scales})
+    return render(request, 'realms/steps/step_1_name_ruler.html')
 
 def create_realm_step_2(request):
     if request.method == "POST":

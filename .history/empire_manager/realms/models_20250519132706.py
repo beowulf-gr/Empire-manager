@@ -23,7 +23,7 @@ class RealmScale(models.Model):
 class Realm(models.Model):
     name = models.CharField(max_length=100, unique=True)
     ruler = models.CharField(max_length=100)
-    scale = models.ForeignKey(RealmScale, on_delete=models.CASCADE, null=True, blank=True)
+    scale = models.ForeignKey(RealmScale, on_delete=models.CASCADE, default=1)
     treasury = models.IntegerField(default=0)
     resources = models.JSONField(default=dict)
     season = models.CharField(max_length=10, default="Spring")

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Realm, LandUnit, PopulationUnit, LandUnitType, MINERAL_SUBTYPES, RealmScale
-from django.http import HttpResponse, Http404, JsonResponse
+from .models import Realm, LandUnit, PopulationUnit, LandUnitType, MINERAL_SUBTYPES
+from django.http import HttpResponse, Http404
 from django.contrib import messages
 from .forms import RealmInfoForm, TreasuryForm, ResourcesForm, LandUnitForm, PopulationUnitForm, PopulationRace
 from django.forms import formset_factory, modelformset_factory
@@ -23,17 +23,11 @@ def _assign_mineral_type():
             return mineral
     return "Iron"  # Default if no match
 
-def get_realm_scales_json(request):
-    realm_scales = RealmScale.objects.all().values('id', 'name')  # Fetch id and name
-    return JsonResponse(list(realm_scales), safe=False)
-
 def realm_create_automatic(request):
     if request.method == 'GET':
         domain_type = request.GET.get('domain')
         realm_name_input = request.GET.get('realm_name')
         ruler_name = request.GET.get('ruler_name')
-        realm_scale_id = request.GET.get('realm_scale_id')  # Get the scale ID
-
         if domain_type in ["Standard", "Coastal", "Desert", "Forest", "Hills", "Mountains"]:
             name_prefixes = []
             starting_land_units_config = {}
@@ -143,14 +137,10 @@ def realm_create_automatic(request):
                 'Silver': 0,
             }
 
-            # Get the realm scale object
-            realm_scale = get_object_or_404(RealmScale, id=realm_scale_id) # Get by ID
-            
             # Create the new realm object
             new_realm = Realm.objects.create(
                 name=realm_name,
                 ruler=ruler_name,
-                scale=realm_scale,  # Assign the RealmScale instance
                 treasury=0, # Initialize treasury to 0 for now
                 resources=starting_resources.copy(), # Initialize with empty resources
             )
@@ -255,35 +245,27 @@ def create_realm_start(request):
     return redirect('create_realm_step_1')
 
 def create_realm_step_1(request):
-    realm_scales = RealmScale.objects.all()  # Fetch all available realm scales
-
     if request.method == "POST":
         name = request.POST.get("name")
         ruler = request.POST.get("ruler")
-        scale_id = request.POST.get("realm_scale")  # Get the selected scale ID
         
-        if not name or not ruler or not scale_id:
+        if not name or not ruler:
             messages.error(request, "Name and ruler are required.")
         elif Realm.objects.filter(name=name).exists():
             messages.error(request, "A realm with that name already exists.")
         else:
-            try:
-                realm_scale = RealmScale.objects.get(id=scale_id)
-                request.session['new_realm'] = {
-                    "name": name,
-                    "ruler": ruler,
-                    "scale_id": scale_id,
-                    "treasury": 0,
-                    "resources": {},
-                    "land_units": [],
-                    "population_units": []
-                }
-                print(f"Session after step 1: {request.session.get('new_realm')}")
-                return redirect('create_realm_step_2')
-            except RealmScale.DoesNotExist:
-                messages.error(request, "Invalid realm scale selected.")
+            request.session['new_realm'] = {
+                "name": name,
+                "ruler": ruler,
+                "treasury": 0,
+                "resources": {},
+                "land_units": [],
+                "population_units": []
+            }
+            print(f"Session after step 1: {request.session.get('new_realm')}")
+            return redirect('create_realm_step_2')
 
-    return render(request, 'realms/steps/step_1_name_ruler.html', {'realm_scales': realm_scales})
+    return render(request, 'realms/steps/step_1_name_ruler.html')
 
 def create_realm_step_2(request):
     if request.method == "POST":

@@ -27,10 +27,10 @@ urlpatterns = [
     path('<str:realm_name>/edit/land/', views.edit_land, name='edit_existing_land'),
     path('<str:realm_name>/edit/population/', views.edit_population, name='edit_existing_population'),
     # Other existing URLs for realm detail and creation of land and population units
-    path('realm_scales_json/', views.get_realm_scales_json, name='get_realm_scales_json'),
     path('<str:name>/', views.realm_detail, name='realm_detail'),
     path('realms/<str:name>/delete/', views.delete_realm, name='delete_realm'),
     path('<str:realm_name>/create_land_unit/', views.create_land_unit, name='create_land_unit'),
     path('<str:realm_name>/create_population_unit/', views.create_population_unit, name='create_population_unit'),
     path('realms/create/automatic/', views.realm_create_automatic, name='realm_create_automatic'),
+    path('get_realm_scales_json/', views.get_realm_scales_json, name='get_realm_scales_json'),
 ]

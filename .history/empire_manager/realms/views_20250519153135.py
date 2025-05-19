@@ -267,23 +267,19 @@ def create_realm_step_1(request):
         elif Realm.objects.filter(name=name).exists():
             messages.error(request, "A realm with that name already exists.")
         else:
-            try:
-                realm_scale = RealmScale.objects.get(id=scale_id)
-                request.session['new_realm'] = {
-                    "name": name,
-                    "ruler": ruler,
-                    "scale_id": scale_id,
-                    "treasury": 0,
-                    "resources": {},
-                    "land_units": [],
-                    "population_units": []
-                }
-                print(f"Session after step 1: {request.session.get('new_realm')}")
-                return redirect('create_realm_step_2')
-            except RealmScale.DoesNotExist:
-                messages.error(request, "Invalid realm scale selected.")
+            request.session['new_realm'] = {
+                "name": name,
+                "ruler": ruler,
+                "scale_id": scale_id,
+                "treasury": 0,
+                "resources": {},
+                "land_units": [],
+                "population_units": []
+            }
+            print(f"Session after step 1: {request.session.get('new_realm')}")
+            return redirect('create_realm_step_2')
 
-    return render(request, 'realms/steps/step_1_name_ruler.html', {'realm_scales': realm_scales})
+    return render(request, 'realms/steps/step_1_name_ruler.html')
 
 def create_realm_step_2(request):
     if request.method == "POST":

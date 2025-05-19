@@ -12,10 +12,7 @@ MINERAL_SUBTYPES = [
 ]
 class RealmScale(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(default="")
-    pop_unit_size = models.IntegerField(default=1)
-    land_unit_size = models.IntegerField(default=1)
-    gold_unit_value = models.IntegerField(default=1)
+    description = models.TextField()
 
     def __str__(self):
         return self.name
@@ -23,7 +20,7 @@ class RealmScale(models.Model):
 class Realm(models.Model):
     name = models.CharField(max_length=100, unique=True)
     ruler = models.CharField(max_length=100)
-    scale = models.ForeignKey(RealmScale, on_delete=models.CASCADE, null=True, blank=True)
+    scale = models.ForeignKey(RealmScale, on_delete=models.CASCADE)
     treasury = models.IntegerField(default=0)
     resources = models.JSONField(default=dict)
     season = models.CharField(max_length=10, default="Spring")

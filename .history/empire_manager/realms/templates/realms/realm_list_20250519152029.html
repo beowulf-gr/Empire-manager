@@ -89,8 +89,7 @@
         });
 
         function populateRealmScaleDropdown() {
-            const realmScalesUrl = "{% url 'get_realm_scales_json' %}";
-            console.log("Fetching URL:", realmScalesUrl);
+            const realmScalesUrl = "/realm{% url 'get_realm_scales_json' %}";
             fetch(realmScalesUrl)
                 .then(response => response.json())
                 .then(data => {
@@ -107,7 +106,6 @@
                     realmScaleSelect.innerHTML = '<option value="" disabled selected>Error loading scales</option>';
                 });
         }
-
         confirmAutomaticCreationBtn.addEventListener('click', function() {
             if (selectedDomain) {
                 const realmName = document.getElementById('realmName').value;

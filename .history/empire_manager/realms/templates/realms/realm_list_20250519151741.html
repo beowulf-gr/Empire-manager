@@ -89,9 +89,7 @@
         });
 
         function populateRealmScaleDropdown() {
-            const realmScalesUrl = "{% url 'get_realm_scales_json' %}";
-            console.log("Fetching URL:", realmScalesUrl);
-            fetch(realmScalesUrl)
+            fetch("/realm/{% url 'get_realm_scales_json' %}") // Ensure the /realm/ prefix is here
                 .then(response => response.json())
                 .then(data => {
                     realmScaleSelect.innerHTML = '<option value="" disabled selected>Select Realm Scale</option>';

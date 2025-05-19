@@ -89,16 +89,13 @@
         });
 
         function populateRealmScaleDropdown() {
-            const realmScalesUrl = "{% url 'get_realm_scales_json' %}";
-            console.log("Fetching URL:", realmScalesUrl);
-            fetch(realmScalesUrl)
+            fetch("/realm/{% url 'get_realm_scales_json' %}") // URL to fetch RealmScale data as JSON
                 .then(response => response.json())
                 .then(data => {
-                    realmScaleSelect.innerHTML = '<option value="" disabled selected>Select Realm Scale</option>';
                     data.forEach(scale => {
                         const option = document.createElement('option');
-                        option.value = scale.id;
-                        option.textContent = scale.name;
+                        option.value = scale.id; // Use the ID as the value
+                        option.textContent = scale.name; // Display the name
                         realmScaleSelect.appendChild(option);
                     });
                 })
