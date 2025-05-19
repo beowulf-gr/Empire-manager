@@ -28,7 +28,6 @@ urlpatterns = [
     path('<str:realm_name>/edit/population/', views.edit_population, name='edit_existing_population'),
     path('<str:realm_name>/actions/', views.player_actions, name='player_actions'),
     path('<str:realm_name>/end_turn/', views.end_turn, name='end_turn'),
-    path('<str:realm_name>/start_action/', views.start_action, name='start_action'),
     # Other existing URLs for realm detail and creation of land and population units
     path('realm_scales_json/', views.get_realm_scales_json, name='get_realm_scales_json'),
     path('<str:name>/', views.realm_detail, name='realm_detail'),

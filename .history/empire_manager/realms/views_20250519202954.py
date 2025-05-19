@@ -859,12 +859,16 @@ def player_actions(request, realm_name):
                 if get_details_func:
                     available_actions_details.append(get_details_func())
                     break # Found details, move to the next action
-    
-    print(f"ongoing_actions for {ongoing_actions}")
+
+    print(f"Available actions details: {available_actions_details}")
+    # Serialize the list of dictionaries to JSON
+    available_actions_json = json.dumps(available_actions_details)
+    print(f"Available actions JSON: {available_actions_json}")
+
     context = {
         'realm': realm,
         'ongoing_actions': ongoing_actions,
-        'available_actions': available_actions_details,
+        'available_actions': mark_safe(available_actions_json),
     }
     return render(request, 'realms/player_actions.html', context)
 
@@ -884,11 +888,11 @@ def end_turn(request, realm_name):
             action.completed = True
             action.save()
             # Apply the effects of the completed action
-            if action.action_name == "construct_farm":
+            if action.action_type == "construct_farm":
                 generic_actions.finish_farm_construction(realm, action.data)
-            elif action.action_name == "train_units":
+            elif action.action_type == "train_units":
                 generic_actions.finish_unit_training(realm, action.data)
-            elif action.action_name == "mine_resources":
+            elif action.action_type == "mine_resources":
                 generic_actions.apply_mining_yield(realm, action.data)
             # ... handle other action types ...
 

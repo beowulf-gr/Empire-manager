@@ -1,4 +1,3 @@
-import json
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Realm, LandUnit, PopulationUnit, LandUnitType, MINERAL_SUBTYPES, RealmScale, OngoingAction
 from django.http import HttpResponse, Http404, JsonResponse
@@ -10,8 +9,6 @@ from django.views.decorators.http import require_POST
 import random
 from .game_logic import generic_actions, spring_actions, summer_actions, fall_actions, winter_actions
 from .game_logic.action_definitions import AVAILABLE_ACTIONS
-from django.core.serializers import serialize
-from django.utils.safestring import mark_safe
 
 @require_POST
 def delete_realm(request, name):
@@ -859,8 +856,10 @@ def player_actions(request, realm_name):
                 if get_details_func:
                     available_actions_details.append(get_details_func())
                     break # Found details, move to the next action
-    
-    print(f"ongoing_actions for {ongoing_actions}")
+
+    # Serialize the list of dictionaries to JSON
+    available_actions_json = json.dumps(available_actions_details)
+
     context = {
         'realm': realm,
         'ongoing_actions': ongoing_actions,
@@ -884,11 +883,11 @@ def end_turn(request, realm_name):
             action.completed = True
             action.save()
             # Apply the effects of the completed action
-            if action.action_name == "construct_farm":
+            if action.action_type == "construct_farm":
                 generic_actions.finish_farm_construction(realm, action.data)
-            elif action.action_name == "train_units":
+            elif action.action_type == "train_units":
                 generic_actions.finish_unit_training(realm, action.data)
-            elif action.action_name == "mine_resources":
+            elif action.action_type == "mine_resources":
                 generic_actions.apply_mining_yield(realm, action.data)
             # ... handle other action types ...
 

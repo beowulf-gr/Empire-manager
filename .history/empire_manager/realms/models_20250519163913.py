@@ -29,43 +29,8 @@ class Realm(models.Model):
     season = models.CharField(max_length=10, default="Spring")
     year = models.IntegerField(default=1)
 
-    def next_season(self):
-        seasons = ["Spring", "Summer", "Autumn", "Winter"]
-        current_index = seasons.index(self.season)
-        next_index = (current_index + 1) % 4
-        self.season = seasons[next_index]
-        if self.season == "Spring":
-            self.year += 1
-        self.save()
-
-    def get_ongoing_actions(self):
-        return self.ongoingaction_set.all()
-
     def __str__(self):
         return self.name
-    
-class OngoingAction(models.Model):
-    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
-    action_name = models.CharField(max_length=100)  # e.g., "construct_farm", "train_units"
-    start_season = models.CharField(max_length=10)
-    start_year = models.IntegerField()
-    duration = models.IntegerField(default=1)  # Duration in seasons
-    completed = models.BooleanField(default=False)
-    # You might want to store additional action-specific data here as JSON
-    # data = models.JSONField(null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.action_name} for {self.realm.name} (Started {self.start_season} Year {self.start_year})"
-
-    def is_completed(self, current_season, current_year):
-        seasons = ["Spring", "Summer", "Autumn", "Winter"]
-        start_index = seasons.index(self.start_season)
-        current_index = seasons.index(current_season)
-
-        elapsed_years = current_year - self.start_year
-        elapsed_seasons = elapsed_years * 4 + (current_index - start_index)
-
-        return elapsed_seasons >= self.duration
     
 class LandUnitType(models.Model):
     name = models.CharField(max_length=100, unique=True)

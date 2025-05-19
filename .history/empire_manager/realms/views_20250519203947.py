@@ -884,11 +884,11 @@ def end_turn(request, realm_name):
             action.completed = True
             action.save()
             # Apply the effects of the completed action
-            if action.action_name == "construct_farm":
+            if action.action_type == "construct_farm":
                 generic_actions.finish_farm_construction(realm, action.data)
-            elif action.action_name == "train_units":
+            elif action.action_type == "train_units":
                 generic_actions.finish_unit_training(realm, action.data)
-            elif action.action_name == "mine_resources":
+            elif action.action_type == "mine_resources":
                 generic_actions.apply_mining_yield(realm, action.data)
             # ... handle other action types ...
 

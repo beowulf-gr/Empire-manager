@@ -46,16 +46,16 @@ class Realm(models.Model):
     
 class OngoingAction(models.Model):
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
-    action_name = models.CharField(max_length=100)  # e.g., "construct_farm", "train_units"
+    action_type = models.CharField(max_length=100)  # e.g., "construct_farm", "train_units"
     start_season = models.CharField(max_length=10)
     start_year = models.IntegerField()
     duration = models.IntegerField(default=1)  # Duration in seasons
     completed = models.BooleanField(default=False)
     # You might want to store additional action-specific data here as JSON
-    # data = models.JSONField(null=True, blank=True)
+    data = models.JSONField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.action_name} for {self.realm.name} (Started {self.start_season} Year {self.start_year})"
+        return f"{self.action_type} for {self.realm.name} (Started {self.start_season} Year {self.start_year})"
 
     def is_completed(self, current_season, current_year):
         seasons = ["Spring", "Summer", "Autumn", "Winter"]

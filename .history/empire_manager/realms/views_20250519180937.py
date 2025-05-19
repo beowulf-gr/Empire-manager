@@ -1,4 +1,3 @@
-import json
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Realm, LandUnit, PopulationUnit, LandUnitType, MINERAL_SUBTYPES, RealmScale, OngoingAction
 from django.http import HttpResponse, Http404, JsonResponse
@@ -8,10 +7,6 @@ from django.forms import formset_factory, modelformset_factory
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 import random
-from .game_logic import generic_actions, spring_actions, summer_actions, fall_actions, winter_actions
-from .game_logic.action_definitions import AVAILABLE_ACTIONS
-from django.core.serializers import serialize
-from django.utils.safestring import mark_safe
 
 @require_POST
 def delete_realm(request, name):
@@ -836,74 +831,3 @@ def edit_population(request, realm_name=None):
                 return redirect(reverse('create_realm_review'))
 
     return render(request, 'realms/edit/edit_population.html', {'formset': formset})
-
-ACTION_MODULES = {
-    "Spring": spring_actions,
-    "Summer": summer_actions,
-    "Fall": fall_actions,
-    "Winter": winter_actions,
-    "All": generic_actions,
-}
-
-
-def player_actions(request, realm_name):
-    realm = get_object_or_404(Realm, name=realm_name)
-    ongoing_actions = realm.get_ongoing_actions()
-    available_actions_names = AVAILABLE_ACTIONS.get(realm.season, []) + AVAILABLE_ACTIONS.get("All", [])
-    available_actions_details = []
-    for action_name in available_actions_names:
-        module_name = action_name.lower().replace(" ", "_") # Convert action name to module function name
-        for season, module in ACTION_MODULES.items():
-            if season.lower() == realm.season.lower() or season.lower() == 'all':
-                get_details_func = getattr(module, f"get_{module_name}_details", None)
-                if get_details_func:
-                    available_actions_details.append(get_details_func())
-                    break # Found details, move to the next action
-    
-    print(f"ongoing_actions for {ongoing_actions}")
-    context = {
-        'realm': realm,
-        'ongoing_actions': ongoing_actions,
-        'available_actions': available_actions_details,
-    }
-    return render(request, 'realms/player_actions.html', context)
-
-def end_turn(request, realm_name):
-    realm = get_object_or_404(Realm, name=realm_name)
-    current_season = realm.season
-    current_year = realm.year
-
-    realm.next_season()
-    next_season = realm.season
-    next_year = realm.year
-
-    ongoing_actions = OngoingAction.objects.filter(realm=realm, completed=False)
-
-    for action in ongoing_actions:
-        if action.is_completed(next_season, next_year):
-            action.completed = True
-            action.save()
-            # Apply the effects of the completed action
-            if action.action_name == "construct_farm":
-                generic_actions.finish_farm_construction(realm, action.data)
-            elif action.action_name == "train_units":
-                generic_actions.finish_unit_training(realm, action.data)
-            elif action.action_name == "mine_resources":
-                generic_actions.apply_mining_yield(realm, action.data)
-            # ... handle other action types ...
-
-    return redirect('player_actions', realm_name=realm_name)
-
-def start_action(request, realm_name):
-    realm = get_object_or_404(Realm, name=realm_name)
-    if request.method == "POST":
-        action_type = request.POST.get("action_type").lower().replace(" ", "_")
-        for season, module in ACTION_MODULES.items():
-            if season.lower() == realm.season.lower() or season.lower() == action_type:
-                start_func = getattr(module, f"start_{action_type}", None)
-                if start_func:
-                    start_func(realm, request.POST)
-                    break
-        return redirect('player_actions', realm_name=realm_name)
-    else:
-        return redirect('player_actions', realm_name=realm_name)
