@@ -1,0 +1,270 @@
+<h1>Actions for {{ realm.name }} (Season: {{ realm.season }}, Year: {{ realm.year }})</h1>
+
+<div style="display: none;" id="available-actions-data">{{ available_actions_json }}</div>
+
+<div class="available-actions">
+    <h2>Available Actions</h2>
+    <ul>
+        {% for action in available_actions %}
+            <li>
+                <button type="button" class="action-button" data-action-slug="{{ action.slug }}" data-action-name="{{ action.name }}">{{ action.name }}</button>
+                <a href="#" class="action-details-link" data-action="{{ action.name }}">Details</a>
+            </li>
+        {% empty %}
+            <li>No actions available this season.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="ongoing-actions">
+    <h2>Ongoing Actions</h2>
+    <ul>
+        {% for action in ongoing_actions %}
+            <li>
+                {{ action.display_name }} (Started: {{ action.start_season }} Year {{ action.start_year }}, Duration: {{ action.duration }} seasons)
+            </li>
+        {% empty %}
+            <li>No ongoing actions.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<button id="end-season-btn" class="large-button">End Season</button>
+
+<a href="{% url 'realm_detail' name=realm.name %}" class="back-button">Back to Realm Details</a>
+
+<div id="unified-action-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h3 id="modal-title"></h3>
+        <p id="modal-description"></p>
+        <form id="dynamic-action-form" method="post" action="{% url 'start_action' realm_name=realm.name %}">
+            {% csrf_token %}
+            <input type="hidden" name="action_name" id="form-action-type">
+            <input type="hidden" name="duration" id="form-duration">
+            <div id="dynamic-inputs">
+                </div>
+            <button type="submit" id="form-submit-button"></button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const actionButtons = document.querySelectorAll('.action-button');
+    const actionDetailsLinks = document.querySelectorAll('.action-details-link'); // Renamed to avoid confusion
+    const unifiedActionModal = document.getElementById('unified-action-modal');
+    const closeButton = unifiedActionModal.querySelector('.close-button');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDescription = document.getElementById('modal-description');
+    const dynamicActionForm = document.getElementById('dynamic-action-form');
+    const formActionType = document.getElementById('form-action-type');
+    const formDuration = document.getElementById('form-duration');
+    const dynamicInputsDiv = document.getElementById('dynamic-inputs');
+    const formSubmitButton = document.getElementById('form-submit-button');
+    const endSeasonBtn = document.getElementById('end-season-btn');
+    const availableActionsData = JSON.parse(document.getElementById('available-actions-data').textContent);
+
+    console.log(availableActionsData);
+
+    // Map to quickly find action details by slug or name
+    const actionsMap = new Map();
+    availableActionsData.forEach(action => {
+        actionsMap.set(action.name, action); // Map by display name
+        actionsMap.set(action.slug, action); // Map by slug as well for flexibility
+    });
+
+
+    // Function to fetch options for a select dropdown
+    async function fetchSelectOptions(url, selectElement) {
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            selectElement.innerHTML = '<option value="" disabled selected>Select an option</option>';
+            data.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option.id;
+                opt.textContent = option.name;
+                selectElement.appendChild(opt);
+            });
+        } catch (error) {
+            console.error("Error fetching options from " + url + ":", error);
+            selectElement.innerHTML = '<option value="" disabled selected>Error loading options</option>';
+        }
+    }
+
+    // Handle clicking a main action button (to open modal or submit directly)
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            const actionName = this.getAttribute('data-action-name');
+            const action = actionsMap.get(actionName);
+
+            if (!action) {
+                console.error("Action details not found for:", actionName);
+                return;
+            }
+
+            modalTitle.textContent = action.name;
+            modalDescription.textContent = action.description;
+            formActionType.value = action.name; // Use display name for submission
+            formDuration.value = action.duration;
+            formSubmitButton.textContent = action.submit_text;
+
+            dynamicInputsDiv.innerHTML = ''; // Clear previous inputs
+
+            if (action.inputs && action.inputs.length > 0) {
+                action.inputs.forEach(input => {
+                    const label = document.createElement('label');
+                    label.setAttribute('for', input.name);
+                    label.textContent = input.label;
+                    dynamicInputsDiv.appendChild(label);
+
+                    let inputElement;
+                    if (input.type === 'select') {
+                        inputElement = document.createElement('select');
+                        inputElement.id = input.name;
+                        inputElement.name = input.name;
+                        if (input.required) inputElement.required = true;
+                        fetchSelectOptions(input.options_url, inputElement); // Fetch options
+                    } else if (input.type === 'number') {
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'number';
+                        inputElement.id = input.name;
+                        inputElement.name = input.name;
+                        if (input.required) inputElement.required = true;
+                        if (input.default !== undefined) inputElement.value = input.default;
+                    } else { // Default to text
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'text';
+                        inputElement.id = input.name;
+                        inputElement.name = input.name;
+                        if (input.required) inputElement.required = true;
+                        if (input.default !== undefined) inputElement.value = input.default;
+                    }
+                    dynamicInputsDiv.appendChild(inputElement);
+                    dynamicInputsDiv.appendChild(document.createElement('br'));
+                    dynamicInputsDiv.appendChild(document.createElement('br'));
+                });
+            }
+
+            unifiedActionModal.style.display = 'block';
+        });
+    });
+
+    // Handle clicking the "Details" link (just shows description, no form)
+    actionDetailsLinks.forEach(link => {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const actionName = this.getAttribute('data-action');
+            const action = actionsMap.get(actionName);
+            if (action) {
+                modalTitle.textContent = action.name + " (Details)";
+                modalDescription.textContent = action.description + " Duration: " + action.duration + " season(s).";
+                // Hide form elements if just showing details
+                dynamicInputsDiv.innerHTML = '';
+                formSubmitButton.style.display = 'none'; // Hide submit button for details
+                unifiedActionModal.style.display = 'block';
+            }
+        });
+    });
+
+
+    // Universal close button for the unified modal
+    closeButton.addEventListener('click', function() {
+        unifiedActionModal.style.display = 'none';
+        formSubmitButton.style.display = 'block'; // Show submit button again for next time
+    });
+
+    // Close modal by clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === unifiedActionModal) {
+            unifiedActionModal.style.display = 'none';
+            formSubmitButton.style.display = 'block'; // Show submit button again
+        }
+    });
+
+    // End Season button
+    endSeasonBtn.addEventListener('click', function() {
+        if (confirm("Are you sure you want to end the current season?")) {
+            window.location.href = "{% url 'end_turn' realm_name=realm.name %}";
+        }
+    });
+</script>
+
+<style>
+     .back-to-realm-button {
+        display: inline-block; /* Already inline-block, but good to keep */
+        padding: 10px 20px;
+        margin-top: 15px; /* Add some space below the End Season button */
+        background-color: #f0f0f0;
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 1em;
+        cursor: pointer;
+    }
+
+    .back-to-realm-button:hover {
+        background-color: #e0e0e0;
+    }
+
+    .available-actions ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .available-actions li {
+        margin-bottom: 10px;
+    }
+
+    .action-details {
+        margin-left: 10px;
+        text-decoration: none;
+    }
+
+    .large-button {
+        padding: 15px 30px;
+        font-size: 1.2em;
+        margin-top: 20px;
+        cursor: pointer;
+        /* NEW: Make it a block-level element */
+        display: block;
+        width: fit-content; /* Make it only as wide as its content */
+        margin-left: 0; /* Align left if it was centered by margin:auto */
+        margin-right: auto;
+    }
+
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+    }
+
+    .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close-button:hover,
+    .close-button:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+</style>

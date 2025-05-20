@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ realm.name }} - Details</title>
+    {% load static %}
+    {% load l10n %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+</head>
+<body>
+    <h1>{{ realm.name }} - Details</h1>
+    <p><strong>Ruler:</strong> {{ realm.ruler }}</p>
+    <p><strong>Realm Scale:</strong> {{ realm.scale.name }}. {{ realm.scale.description }}</p>
+    <ul>
+        <li><strong>Population Units:</strong> {{ realm.scale.pop_unit_size }} people</li>
+        <li><strong>Gold Units:</strong> {{ realm.scale.gold_unit_value }} GP</li>
+        <li><strong>Land Units:</strong> {{ realm.scale.land_unit_size }} square miles</li>
+    </ul>
+    <p><strong>Season:</strong> {{ realm.season }}</p>
+    <p><strong>Year:</strong> {{ realm.year }}</p>
+
+    <h2>Treasury</h2>
+    {{ realm.treasury }} Gold Units
+    <h2>Resources</h2>
+    <ul>
+        {% for resource, amount in realm.resources.items %}
+            <li>{{ resource }}: {{ amount }} </li>
+        {% empty %}
+            <li>No resources yet.</li>
+        {% endfor %}
+    </ul>
+    <!-- <p>Resources: {{ realm.resources }}</p> -->
+
+    <h2>Land Units</h2>
+        <ul>
+            {% for unit_type, count in land_unit_summary.items %}
+                <li>{{ unit_type }} x{{ count }}</li>
+            {% empty %}
+                <li>No land units.</li>
+            {% endfor %}
+        </ul>
+
+        <h2>Population Units</h2>
+        <ul>
+            {% for race, count in population_unit_summary.items %}
+                <li>{{ race }} x{{ count }}</li>
+            {% empty %}
+                <li>No population units.</li>
+            {% endfor %}
+        </ul>
+
+    <!-- <h2>Land Units</h2>
+    <ul>
+        {% for land_unit in realm.land_units.all %}
+            <li>{{ land_unit.name }} - Type: {{ land_unit.unit_type }}</li>
+        {% empty %}
+            <li>No land units created yet.</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Population Units</h2>
+    <ul>
+        {% for unit in population_units %}
+            <li>{{ unit.race }}</li>
+        {% empty %}
+            <li>No population units available.</li>
+        {% endfor %}
+    </ul> -->
+
+    <!-- <a href="{% url 'create_land_unit' realm.name %}">Create New Land Unit</a>
+    <br>
+    <a href="{% url 'create_population_unit' realm.name %}">Create New Population Unit</a>
+    <br> -->
+
+    <h3>Edit Realm:</h3>
+    <ul>
+        <li><a href="{% url 'edit_existing_realm_info' realm_name=realm.name %}">Realm Info</a></li>
+        <li><a href="{% url 'edit_existing_treasury' realm_name=realm.name %}">Treasury</a></li>
+        <li><a href="{% url 'edit_existing_resources' realm_name=realm.name %}">Resources</a></li>
+        <li><a href="{% url 'edit_existing_land' realm_name=realm.name %}">Land</a></li>
+        <li><a href="{% url 'edit_existing_population' realm_name=realm.name %}">Population</a></li>
+    </ul>
+
+     <h3>Delete Realm:</h3>
+    <form method="POST" action="{% url 'delete_realm' realm.name %}" style="margin-top: 2rem;">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('Are you sure you want to delete this realm? This cannot be undone.')">
+            Delete Realm
+        </button>
+    </form>
+
+    <a href="{% url 'player_actions' realm_name=realm.name %}"><button>Play {{ realm.name }}</button></a>
+
+
+    <a href="{% url 'realm_list' %}" class="back-link">Back to Realm List</a>
+</body>
+</html>
