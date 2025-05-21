@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head><title>Step 3 - Resources</title>
+    {% load static %}
+    {% load humanize %} {# For intcomma filter #}
+    {% load realms_extras %} {# Custom template tags #}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+    <style>
+        /* NEW CSS for alignment */
+        td {
+            vertical-align: middle; /* Align cell content vertically */
+        }
+        td input[type="number"] {
+            vertical-align: middle; /* Ensure input itself is middle-aligned */
+            height: 28px; /* Give it a consistent height if needed */
+            line-height: 28px; /* Match line-height to height */
+            padding: 2px 5px; /* Adjust padding if needed */
+            box-sizing: border-box; /* Include padding and border in height/width */
+        }
+        /* Optional: improve table appearance */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Step 3: Initial Resources</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>Quantity</th>
+                    <th>Cost per unit (Gold)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resource in all_resources %}
+                    <tr>
+                        <td>{{ resource.name }}</td>
+                        <td>
+                            <input type="number" 
+                                   name="resource_{{ resource.id }}" 
+                                   id="resource_{{ resource.id }}" 
+                                   value="{{ current_quantities|get_item:resource.id|default:0 }}" 
+                                   min="0" 
+                                   required>
+                        </td>
+                        <td>{{ resource.value }}</td> {# Display with appropriate decimal places #}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <button type="submit">Next</button>
+    </form>
+</body>
+</html>
