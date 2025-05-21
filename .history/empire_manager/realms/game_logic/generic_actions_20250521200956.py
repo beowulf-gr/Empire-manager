@@ -1,7 +1,7 @@
 from ..models import Realm, OngoingAction, PopulationRace, PopulationUnit, Resource, RealmResource, GoodsType, RealmGoodsType
 from django.db import transaction
 import random
-from decimal import Decimal, ROUND_FLOOR, ROUND_HALF_UP
+from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages # For messages within game logic functions
 
 # def get_recruit_population_details():
@@ -60,17 +60,11 @@ def start_recruit_population(realm: Realm, post_data):
 def start_buy_resources(realm: Realm, post_data):
      # This action is instant (duration = 0), so all effects happen here.
     # It does NOT create an OngoingAction.
-    print("--- STARTING BUY RESOURCES ACTION ---")
-    print("Full POST data:", post_data) # <--- ADD THIS LINE FOR DEBUGGING
-    resource_id = post_data.get('resource_id')
+    resource_type = post_data.get('resource_type')
     quantity_str = post_data.get('quantity')
     knowledge_economics_modifier_str = post_data.get('knowledge_economics_modifier')
 
-    print("Resource ID:", resource_id) # <--- ADD THIS LINE FOR DEBUGGING
-    print("Quantity:", quantity_str) # <--- ADD THIS LINE FOR DEBUGGING 
-    print("Knowledge Economics Modifier:", knowledge_economics_modifier_str) # <--- ADD THIS LINE FOR DEBUGGING
-
-    if not resource_id or not quantity_str or knowledge_economics_modifier_str is None:
+    if not goods_type_id or not quantity_str or knowledge_economics_modifier_str is None:
         return False, "All fields (Goods Type, Quantity, Knowledge Modifier) are required.", None
 
     try:
@@ -80,21 +74,20 @@ def start_buy_resources(realm: Realm, post_data):
 
         knowledge_economics_modifier = int(knowledge_economics_modifier_str)
 
-        resource_type_obj = Resource.objects.get(id=resource_id)
+        goods_type_obj = GoodsType.objects.get(id=goods_type_id)
 
         # Calculate total cost in Gold for the goods (based on GoodsType.value)
-        precise_total_cost_decimal = resource_type_obj.value * Decimal(quantity)
-        total_gold_cost = int(precise_total_cost_decimal.quantize(Decimal('1.'), rounding=ROUND_FLOOR))
+        total_gold_cost = Decimal(goods_type_obj.value) * Decimal(quantity)
         
         # Check if realm has enough Gold in treasury
         current_gold_in_treasury = realm.treasury
         if Decimal(current_gold_in_treasury) < total_gold_cost:
             max_affordable_quantity = 0
-            if resource_type_obj.value > 0:
-                max_affordable_quantity = int(Decimal(current_gold_in_treasury) / Decimal(resource_type_obj.value).quantize(Decimal('1.'), rounding=ROUND_FLOOR))
+            if goods_type_obj.value > 0:
+                max_affordable_quantity = int(Decimal(current_gold_in_treasury) / Decimal(goods_type_obj.value).quantize(Decimal('1.'), rounding=ROUND_FLOOR))
             
             return False, (
-                f"Not enough Gold in treasury to buy {quantity} {resource_type_obj.name}. "
+                f"Not enough Gold in treasury to buy {quantity} {goods_type_obj.name}. "
                 f"You need {total_gold_cost.quantize(Decimal('1.00'))} Gold but have {current_gold_in_treasury}. "
                 f"Max you can buy is {max_affordable_quantity}."
             ), None
@@ -121,10 +114,8 @@ def start_buy_resources(realm: Realm, post_data):
 
             if total_roll >= success_threshold:
                 # Success
-                realm.treasury -= total_gold_cost # <--- GOLD DEDUCTION MOVED HERE
-                realm.save() # Save realm to update treasury
                 acquired_quantity = quantity # Base quantity
-                if total_roll >= bonus_threshold:
+                if total_roll > bonus_threshold:
                     # Bonus unit
                     acquired_quantity += 1
                     message_suffix = f" (Roll: {roll} + {knowledge_economics_modifier} = {total_roll}). You successfully bought {acquired_quantity} units, with 1 bonus unit!"
@@ -132,20 +123,20 @@ def start_buy_resources(realm: Realm, post_data):
                     message_suffix = f" (Roll: {roll} + {knowledge_economics_modifier} = {total_roll}). You successfully bought {acquired_quantity} units."
                 
                 # Add the acquired goods
-                realm.update_goods_quantity(resource_type_obj.name, acquired_quantity)
-                return True, f"Purchase of {resource_type_obj.name} completed." + message_suffix, None
+                realm.update_goods_quantity(goods_type_obj.name, acquired_quantity)
+                return True, f"Purchase of {goods_type_obj.name} completed." + message_suffix, None
             else:
                 # Failure
                 message_suffix = f" (Roll: {roll} + {knowledge_economics_modifier} = {total_roll}). The purchase failed. No goods acquired."
                 # Gold is still deducted even on failure (cost of trying)
-                return False, f"Purchase of {resource_type_obj.name} failed." + message_suffix, None
+                return False, f"Purchase of {goods_type_obj.name} failed." + message_suffix, None
 
     except ValueError:
         return False, "Quantity and Knowledge Modifier must be numbers.", None
     except GoodsType.DoesNotExist:
-        return False, "Specified Resource Type not found.", None
+        return False, "Specified Goods Type not found.", None
     except Exception as e:
-        print(f"Error during instant buy_resources action: {e}")
+        print(f"Error during instant buy_goods action: {e}")
         return False, f"An unexpected error occurred: {e}", None
 
 # finish_buy_goods is no longer used for this action and can be removed from this file.

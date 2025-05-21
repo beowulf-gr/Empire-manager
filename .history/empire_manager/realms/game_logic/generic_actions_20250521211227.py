@@ -62,13 +62,9 @@ def start_buy_resources(realm: Realm, post_data):
     # It does NOT create an OngoingAction.
     print("--- STARTING BUY RESOURCES ACTION ---")
     print("Full POST data:", post_data) # <--- ADD THIS LINE FOR DEBUGGING
-    resource_id = post_data.get('resource_id')
+    resource_id = post_data.get('resource_type_id')
     quantity_str = post_data.get('quantity')
     knowledge_economics_modifier_str = post_data.get('knowledge_economics_modifier')
-
-    print("Resource ID:", resource_id) # <--- ADD THIS LINE FOR DEBUGGING
-    print("Quantity:", quantity_str) # <--- ADD THIS LINE FOR DEBUGGING 
-    print("Knowledge Economics Modifier:", knowledge_economics_modifier_str) # <--- ADD THIS LINE FOR DEBUGGING
 
     if not resource_id or not quantity_str or knowledge_economics_modifier_str is None:
         return False, "All fields (Goods Type, Quantity, Knowledge Modifier) are required.", None

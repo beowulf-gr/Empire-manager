@@ -62,7 +62,7 @@ def start_buy_resources(realm: Realm, post_data):
     # It does NOT create an OngoingAction.
     print("--- STARTING BUY RESOURCES ACTION ---")
     print("Full POST data:", post_data) # <--- ADD THIS LINE FOR DEBUGGING
-    resource_id = post_data.get('resource_id')
+    resource_id = post_data.get('resource_type_id')
     quantity_str = post_data.get('quantity')
     knowledge_economics_modifier_str = post_data.get('knowledge_economics_modifier')
 

@@ -225,7 +225,7 @@
             <p id="modal-description"></p>
             <form id="dynamic-action-form" method="post" action="{% url 'start_action' realm_name=realm.name %}">
                 {% csrf_token %}
-                <input type="hidden" name="action_name" id="form-action-type">
+                <input type="hidden" name="action_type" id="form-action-type">
                 <input type="hidden" name="duration" id="form-duration">
                 <div id="dynamic-inputs">
                     </div>

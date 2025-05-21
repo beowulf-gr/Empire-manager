@@ -93,9 +93,9 @@
             height: 100%; /* Full height */
             overflow: auto; /* Enable scroll if needed */
             background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-            /*display: flex; /* Use flexbox to center content */
-            /*justify-content: center; /* Center horizontally */
-            /*align-items: center; /* Center vertically */
+            display: flex; /* Use flexbox to center content */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
         }
 
         .modal-content {
@@ -108,7 +108,6 @@
             animation-name: animatetop;
             animation-duration: 0.4s;
             position: relative; /* For close button positioning */
-            margin: auto; /* Keep this to ensure centering */
         }
 
         /* Add animation */
@@ -225,7 +224,7 @@
             <p id="modal-description"></p>
             <form id="dynamic-action-form" method="post" action="{% url 'start_action' realm_name=realm.name %}">
                 {% csrf_token %}
-                <input type="hidden" name="action_name" id="form-action-type">
+                <input type="hidden" name="action_type" id="form-action-type">
                 <input type="hidden" name="duration" id="form-duration">
                 <div id="dynamic-inputs">
                     </div>
@@ -284,7 +283,7 @@
                     // Store relevant data directly in the array that will be filtered
                     if (url.includes('get_resource_types_json')) {
                         // Ensure 'value' is a number for calculation
-                        option.value_numeric = parseFloat(option.value); // Convert to float if not already
+                        option.value_decimal = parseFloat(option.value); // Convert to float if not already
                         allResourcesData.push(option);
                     } else if (url.includes('get_goods_types_json')) {
                         // Ensure 'value' is a number for calculation
@@ -471,7 +470,7 @@
                         await buildDynamicInputs(action, dynamicInputsDiv);
                     }
                 }
-                unifiedActionModal.style.display = 'flex';
+                unifiedActionModal.style.display = 'block';
                 formSubmitButton.style.display = 'block';
             });
         });
@@ -636,29 +635,16 @@
             previewElement.textContent = "";
 
             if (!selectedResourceId || isNaN(quantity) || quantity <= 0) {
-                // Also disable submit button if inputs are invalid
-                formSubmitButton.disabled = true;
                 return;
             }
 
             const resource = allResourcesData.find(r => r.id == selectedResourceId);
             if (!resource) {
-                formSubmitButton.disabled = true; // Disable if resource not found
                 return;
             }
 
-            // Use the correctly parsed numeric value
-            const costPerUnit = resource.value_numeric; 
-
-            // Additional check in case value_numeric didn't parse correctly
-            if (isNaN(costPerUnit)) {
-                console.error("Resource value_numeric is NaN for resource:", resource.name);
-                previewElement.textContent = "Error calculating cost.";
-                formSubmitButton.disabled = true;
-                return;
-            }
-
-            let totalCost = Math.round(costPerUnit * quantity);
+            // Calculate total cost (using resource.value, which is gold_cost_per_unit)
+            const totalCost = resource.value * quantity; 
             
             previewElement.textContent = `Total Cost: ${totalCost.toLocaleString()} Gold`;
 

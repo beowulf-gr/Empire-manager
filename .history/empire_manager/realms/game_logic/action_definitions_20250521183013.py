@@ -32,16 +32,15 @@ ALL_GAME_ACTIONS = {
             {"name": "charisma_modifier", "label": "Charisma Modifier:", "type": INPUT_TYPE_NUMBER, "required": True, "default": 0}
         ]
     },
-    "Buy Resources": {
-        "name": "Buy Resources",
-        "slug": "buy_resources",
-        "description": "Purchase resources from the market.",
-        "duration": 0,
-        "submit_text": "Buy Resources",
+    "Buy Goods": {
+        "name": "Buy Goods",
+        "slug": "buy_goods",
+        "description": "Purchase goods from the market.",
+        "duration": 1,
+        "submit_text": "Buy Goods",
         "inputs": [
-            {"name": "resource_type_id", "label": "Resource Type:", "type": INPUT_TYPE_SELECT, "required": True, "options_url": "/realm/get_resource_types_json/"},
-            {"name": "quantity", "label": "Quantity:", "type": INPUT_TYPE_NUMBER, "required": True, "default": 1},
-            {"name": "knowledge_economics_modifier", "label": "Knowledge (Economics) Modifier:", "type": INPUT_TYPE_NUMBER, "required": True, "default": 0}
+            {"name": "goods_type", "label": "Goods Type:", "type": INPUT_TYPE_SELECT, "required": True, "options_url": "/realm/get_goods_types_json/"},
+            {"name": "quantity", "label": "Quantity:", "type": INPUT_TYPE_NUMBER, "required": True, "default": 1}
         ]
     },
 }
@@ -52,7 +51,7 @@ SEASONAL_ACTIONS = {
     "Summer": [],
     "Autumn": [],
     "Winter": [],
-    "All": ["Recruit Population", "Buy Resources"], # Actions always available
+    "All": ["Recruit Population", "Buy Goods"], # Actions always available
 }
 
 # Map slugs to the actual Python functions that handle the action's start/finish logic
@@ -61,11 +60,11 @@ ACTION_HANDLERS = {
     "recruit_population": {
         "module": "generic_actions",
         "start_func": "start_recruit_population",
-        #"finish_func": "finish_recruit_population",
+        "finish_func": "finish_recruit_population",
     },
-    "buy_resources": {
+    "buy_goods": {
         "module": "generic_actions",
-        "start_func": "start_buy_resources",
-        #"finish_func": "finish_buy_resources",
+        "start_func": "start_buy_goods",
+        "finish_func": "finish_buy_goods",
     },
 }

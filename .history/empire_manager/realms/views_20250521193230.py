@@ -1340,7 +1340,3 @@ def get_population_races_json(request):
 def get_goods_types_json(request):
     goods_types = GoodsType.objects.all().values('id', 'name')
     return JsonResponse(list(goods_types), safe=False)
-
-def get_resource_types_json(request):
-    resource_types = Resource.objects.all().values('id', 'name', 'value')
-    return JsonResponse(list(resource_types), safe=False)

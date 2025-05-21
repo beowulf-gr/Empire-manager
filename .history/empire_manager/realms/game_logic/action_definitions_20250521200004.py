@@ -39,7 +39,7 @@ ALL_GAME_ACTIONS = {
         "duration": 0,
         "submit_text": "Buy Resources",
         "inputs": [
-            {"name": "resource_type_id", "label": "Resource Type:", "type": INPUT_TYPE_SELECT, "required": True, "options_url": "/realm/get_resource_types_json/"},
+            {"name": "resource_type", "label": "Resource Type:", "type": INPUT_TYPE_SELECT, "required": True, "options_url": "/realm/get_resource_types_json/"},
             {"name": "quantity", "label": "Quantity:", "type": INPUT_TYPE_NUMBER, "required": True, "default": 1},
             {"name": "knowledge_economics_modifier", "label": "Knowledge (Economics) Modifier:", "type": INPUT_TYPE_NUMBER, "required": True, "default": 0}
         ]
@@ -61,11 +61,11 @@ ACTION_HANDLERS = {
     "recruit_population": {
         "module": "generic_actions",
         "start_func": "start_recruit_population",
-        #"finish_func": "finish_recruit_population",
+        "finish_func": "finish_recruit_population",
     },
     "buy_resources": {
         "module": "generic_actions",
         "start_func": "start_buy_resources",
-        #"finish_func": "finish_buy_resources",
+        "finish_func": "finish_buy_resources",
     },
 }

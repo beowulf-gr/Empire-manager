@@ -225,7 +225,7 @@
             <p id="modal-description"></p>
             <form id="dynamic-action-form" method="post" action="{% url 'start_action' realm_name=realm.name %}">
                 {% csrf_token %}
-                <input type="hidden" name="action_name" id="form-action-type">
+                <input type="hidden" name="action_type" id="form-action-type">
                 <input type="hidden" name="duration" id="form-duration">
                 <div id="dynamic-inputs">
                     </div>
@@ -284,7 +284,7 @@
                     // Store relevant data directly in the array that will be filtered
                     if (url.includes('get_resource_types_json')) {
                         // Ensure 'value' is a number for calculation
-                        option.value_numeric = parseFloat(option.value); // Convert to float if not already
+                        option.value_decimal = parseFloat(option.value); // Convert to float if not already
                         allResourcesData.push(option);
                     } else if (url.includes('get_goods_types_json')) {
                         // Ensure 'value' is a number for calculation
@@ -658,7 +658,7 @@
                 return;
             }
 
-            let totalCost = Math.round(costPerUnit * quantity);
+            const totalCost = costPerUnit * quantity; 
             
             previewElement.textContent = `Total Cost: ${totalCost.toLocaleString()} Gold`;
 

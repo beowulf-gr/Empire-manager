@@ -1332,6 +1332,35 @@ def start_action(request, realm_name):
     else:
         messages.error(request, "Invalid request method for starting an action.")
         return redirect('player_actions', realm_name=realm_name)
+
+    #     if action_definition:
+    #         action_slug = action_definition['slug'] # Get the slug (e.g., "recruit_population")
+    #         handler_info = ACTION_HANDLERS.get(action_slug)
+
+    #         if handler_info:
+    #             module_name = handler_info['module']
+    #             start_func_name = handler_info['start_func']
+                
+    #             # Dynamically get the module object
+    #             module_obj = MODULE_MAPPING.get(module_name)
+
+    #             if module_obj:
+    #                 start_func = getattr(module_obj, start_func_name, None)
+    #                 if start_func:
+    #                     # Pass realm and the full POST data to the start function
+    #                     start_func(realm, request.POST)
+    #                 else:
+    #                     print(f"Error: Start function '{start_func_name}' not found in module '{module_name}'.")
+    #             else:
+    #                 print(f"Error: Module '{module_name}' not found in MODULE_MAPPING.")
+    #         else:
+    #             print(f"Error: Action handler info not found for slug '{action_slug}'.")
+    #     else:
+    #         print(f"Error: Action definition not found for display name '{action_display_name}'.")
+
+    #     return redirect('player_actions', realm_name=realm_name)
+    # else:
+    #     return redirect('player_actions', realm_name=realm_name)
     
 def get_population_races_json(request):
     population_races = PopulationRace.objects.all().values('id', 'name')
@@ -1340,7 +1369,3 @@ def get_population_races_json(request):
 def get_goods_types_json(request):
     goods_types = GoodsType.objects.all().values('id', 'name')
     return JsonResponse(list(goods_types), safe=False)
-
-def get_resource_types_json(request):
-    resource_types = Resource.objects.all().values('id', 'name', 'value')
-    return JsonResponse(list(resource_types), safe=False)

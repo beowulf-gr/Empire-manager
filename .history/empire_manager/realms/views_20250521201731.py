@@ -1342,5 +1342,5 @@ def get_goods_types_json(request):
     return JsonResponse(list(goods_types), safe=False)
 
 def get_resource_types_json(request):
-    resource_types = Resource.objects.all().values('id', 'name', 'value')
+    resource_types = Resource.objects.all().values('id', 'name')
     return JsonResponse(list(resource_types), safe=False)

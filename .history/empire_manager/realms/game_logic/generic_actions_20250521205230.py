@@ -1,7 +1,7 @@
 from ..models import Realm, OngoingAction, PopulationRace, PopulationUnit, Resource, RealmResource, GoodsType, RealmGoodsType
 from django.db import transaction
 import random
-from decimal import Decimal, ROUND_FLOOR, ROUND_HALF_UP
+from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages # For messages within game logic functions
 
 # def get_recruit_population_details():
@@ -60,17 +60,11 @@ def start_recruit_population(realm: Realm, post_data):
 def start_buy_resources(realm: Realm, post_data):
      # This action is instant (duration = 0), so all effects happen here.
     # It does NOT create an OngoingAction.
-    print("--- STARTING BUY RESOURCES ACTION ---")
-    print("Full POST data:", post_data) # <--- ADD THIS LINE FOR DEBUGGING
-    resource_id = post_data.get('resource_id')
+    resource_type_id = post_data.get('resource_type_id')
     quantity_str = post_data.get('quantity')
     knowledge_economics_modifier_str = post_data.get('knowledge_economics_modifier')
 
-    print("Resource ID:", resource_id) # <--- ADD THIS LINE FOR DEBUGGING
-    print("Quantity:", quantity_str) # <--- ADD THIS LINE FOR DEBUGGING 
-    print("Knowledge Economics Modifier:", knowledge_economics_modifier_str) # <--- ADD THIS LINE FOR DEBUGGING
-
-    if not resource_id or not quantity_str or knowledge_economics_modifier_str is None:
+    if not resource_type_id or not quantity_str or knowledge_economics_modifier_str is None:
         return False, "All fields (Goods Type, Quantity, Knowledge Modifier) are required.", None
 
     try:
@@ -80,11 +74,10 @@ def start_buy_resources(realm: Realm, post_data):
 
         knowledge_economics_modifier = int(knowledge_economics_modifier_str)
 
-        resource_type_obj = Resource.objects.get(id=resource_id)
+        resource_type_obj = Resource.objects.get(id=resource_type_id)
 
         # Calculate total cost in Gold for the goods (based on GoodsType.value)
-        precise_total_cost_decimal = resource_type_obj.value * Decimal(quantity)
-        total_gold_cost = int(precise_total_cost_decimal.quantize(Decimal('1.'), rounding=ROUND_FLOOR))
+        total_gold_cost = Decimal(resource_type_obj.value) * Decimal(quantity)
         
         # Check if realm has enough Gold in treasury
         current_gold_in_treasury = realm.treasury
