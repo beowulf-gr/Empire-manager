@@ -548,7 +548,7 @@
         }
 
         // NEW: Helper function for "Buy Resources" preview
-        function updateBuyGoodsPreview(goodsTypeSelect, quantityInput, previewElement) {
+        function updateBuyGoodsPreview(goodsTypeSelect, quantityInput, knowledgeModifierInput, previewElement) {
             const selectedGoodsTypeId = goodsTypeSelect.value;
             const quantity = parseInt(quantityInput.value);
 
@@ -561,7 +561,7 @@
             }
 
             const goodsType = allGoodsTypesData.find(r => r.id == selectedGoodsTypeId);
-            if (!goodsType) {
+            if (!good) {
                 formSubmitButton.disabled = true; // Disable if resource not found
                 return;
             }

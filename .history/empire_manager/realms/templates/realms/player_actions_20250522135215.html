@@ -561,7 +561,7 @@
             }
 
             const goodsType = allGoodsTypesData.find(r => r.id == selectedGoodsTypeId);
-            if (!goodsType) {
+            if (!good) {
                 formSubmitButton.disabled = true; // Disable if resource not found
                 return;
             }

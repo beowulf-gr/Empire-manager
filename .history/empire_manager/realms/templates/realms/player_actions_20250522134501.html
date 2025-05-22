@@ -407,42 +407,42 @@
                     buyResourcesCostPreview.style.display = 'block'; // Show external buy resources preview container
 
                 } else if (actionSlug === "buy_goods") { // Handle "Buy Goods" action
-                    dynamicInputsDiv.innerHTML = `
-                        <label for="goods_type_id_buy">Trade Good Type:</label>
-                        <select id="goods_type_id_buy" name="goods_type_id" required>
-                            <option value="" disabled selected>Select Trade Good Type</option>
-                        </select><br><br>
+                dynamicInputsDiv.innerHTML = `
+                    <label for="goods_type_id_buy">Trade Good Type:</label>
+                    <select id="goods_type_id_buy" name="goods_type_id" required>
+                        <option value="" disabled selected>Select Trade Good Type</option>
+                    </select><br><br>
 
-                        <label for="quantity_buy">Quantity:</label>
-                        <input type="number" id="quantity_buy" name="quantity" value="1" min="1" required><br><br>
+                    <label for="quantity_buy">Quantity:</label>
+                    <input type="number" id="quantity_buy" name="quantity" value="1" min="1" required><br><br>
 
-                        <label for="knowledge_economics_modifier_buy">Knowledge (Economics) Modifier:</label>
-                        <input type="number" id="knowledge_economics_modifier_buy" name="knowledge_economics_modifier" value="0" required><br><br>
-                        
-                        <p>Current Treasury: ${currentTreasury.toLocaleString()} Gold</p>
-                        <p id="buy-goods-cost-preview-internal"></p> {# Cost preview for buy Goods #}
-                    `;
-                    // Re-get references to newly created elements inside the modal
-                    const newGoodsTypeSelect = document.getElementById('goods_type_id_buy');
-                    const newQuantityInput = document.getElementById('quantity_buy');
-                    const newKnowledgeModifierInput = document.getElementById('knowledge_economics_modifier_buy');
-                    const newBuyGoodsCostPreviewInternal = document.getElementById('buy-goods-cost-preview-internal');
-
-                    await fetchSelectOptions("{% url 'get_goods_types_json' %}", newGoodsTypeSelect);
+                    <label for="knowledge_economics_modifier_buy">Knowledge (Economics) Modifier:</label>
+                    <input type="number" id="knowledge_economics_modifier_buy" name="knowledge_economics_modifier" value="0" required><br><br>
                     
-                    // Add event listeners for cost preview
-                    newGoodsTypeSelect.onchange = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
-                    newQuantityInput.oninput = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
-                    newKnowledgeModifierInput.oninput = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
-                    
-                    // Initial update call
-                    updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
-                    buyGoodsCostPreview.style.display = 'block'; // Show external buy resources preview container
+                    <p>Current Treasury: ${currentTreasury.toLocaleString()} Gold</p>
+                    <p id="buy-goods-cost-preview-internal"></p> {# Cost preview for buy Goods #}
+                `;
+                // Re-get references to newly created elements inside the modal
+                const newGoodsTypeSelect = document.getElementById('goods_type_id_buy');
+                const newQuantityInput = document.getElementById('quantity_buy');
+                const newKnowledgeModifierInput = document.getElementById('knowledge_economics_modifier_buy');
+                const newBuyGoodsCostPreviewInternal = document.getElementById('buy-goods-cost-preview-internal');
+
+                await fetchSelectOptions("{% url 'get_goods_types_json' %}", newGoodsTypeSelect);
+                
+                // Add event listeners for cost preview
+                newGoodsTypeSelect.onchange = () => updateBuyResourcesPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
+                newQuantityInput.oninput = () => updateBuyResourcesPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
+                newKnowledgeModifierInput.oninput = () => updateBuyResourcesPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
+                
+                // Initial update call
+                updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
+                buyGoodsCostPreview.style.display = 'block'; // Show external buy resources preview container
 
                 } else if (actionSlug === "recruit_population") {
                     await buildDynamicInputs(action, dynamicInputsDiv);
                 }
-                else {
+                 else {
                     // Generic actions with standard inputs (or no inputs)
                     if (action.inputs && action.inputs.length > 0) {
                         await buildDynamicInputs(action, dynamicInputsDiv);
@@ -548,30 +548,30 @@
         }
 
         // NEW: Helper function for "Buy Resources" preview
-        function updateBuyGoodsPreview(goodsTypeSelect, quantityInput, previewElement) {
-            const selectedGoodsTypeId = goodsTypeSelect.value;
+        function updateBuyGoodsPreview(goodSelect, quantityInput, previewElement) {
+            const selectedGoodId = goodSelect.value;
             const quantity = parseInt(quantityInput.value);
 
             previewElement.textContent = "";
 
-            if (!selectedGoodsTypeId || isNaN(quantity) || quantity <= 0) {
+            if (!selectedGoodId || isNaN(quantity) || quantity <= 0) {
                 // Also disable submit button if inputs are invalid
                 formSubmitButton.disabled = true;
                 return;
             }
 
-            const goodsType = allGoodsTypesData.find(r => r.id == selectedGoodsTypeId);
-            if (!goodsType) {
+            const good = allGoodsData.find(r => r.id == selectedGoodId);
+            if (!good) {
                 formSubmitButton.disabled = true; // Disable if resource not found
                 return;
             }
 
             // Use the correctly parsed numeric value
-            const costPerUnit = goodsType.value_numeric; 
+            const costPerUnit = good.value_numeric; 
 
             // Additional check in case value_numeric didn't parse correctly
             if (isNaN(costPerUnit)) {
-                console.error("GoodsType value_numeric is NaN for good:", goodsType.name);
+                console.error("Good value_numeric is NaN for good:", good.name);
                 previewElement.textContent = "Error calculating cost.";
                 formSubmitButton.disabled = true;
                 return;
@@ -583,7 +583,7 @@
 
             // Client-side check for sufficient treasury
             if (totalCost > currentTreasury) {
-                const maxAffordable = Math.floor(currentTreasury / goodsType.value);
+                const maxAffordable = Math.floor(currentTreasury / good.value);
                 previewElement.textContent += ` (Not enough Gold! Max: ${maxAffordable.toLocaleString()})`;
                 formSubmitButton.disabled = true; // Disable submit button
             } else {

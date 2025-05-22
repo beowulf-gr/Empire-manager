@@ -548,7 +548,7 @@
         }
 
         // NEW: Helper function for "Buy Resources" preview
-        function updateBuyGoodsPreview(goodsTypeSelect, quantityInput, previewElement) {
+        function updateBuyGoodsPreview(goodsTypeSelect, quantityInput, knowledgeModifierInput, previewElement) {
             const selectedGoodsTypeId = goodsTypeSelect.value;
             const quantity = parseInt(quantityInput.value);
 
@@ -561,17 +561,17 @@
             }
 
             const goodsType = allGoodsTypesData.find(r => r.id == selectedGoodsTypeId);
-            if (!goodsType) {
+            if (!good) {
                 formSubmitButton.disabled = true; // Disable if resource not found
                 return;
             }
 
             // Use the correctly parsed numeric value
-            const costPerUnit = goodsType.value_numeric; 
+            const costPerUnit = good.value_numeric; 
 
             // Additional check in case value_numeric didn't parse correctly
             if (isNaN(costPerUnit)) {
-                console.error("GoodsType value_numeric is NaN for good:", goodsType.name);
+                console.error("Good value_numeric is NaN for good:", good.name);
                 previewElement.textContent = "Error calculating cost.";
                 formSubmitButton.disabled = true;
                 return;
@@ -583,7 +583,7 @@
 
             // Client-side check for sufficient treasury
             if (totalCost > currentTreasury) {
-                const maxAffordable = Math.floor(currentTreasury / goodsType.value);
+                const maxAffordable = Math.floor(currentTreasury / good.value);
                 previewElement.textContent += ` (Not enough Gold! Max: ${maxAffordable.toLocaleString()})`;
                 formSubmitButton.disabled = true; // Disable submit button
             } else {
