@@ -33,9 +33,7 @@ def start_recruit_population(realm: Realm, post_data):
         # Example recruitment logic:
         # Number of recruits could depend on charisma, races, etc.
         # Ensure num_recruits is at least 0
-        roll = random.randint(1, 20) # Simulate a d20 roll
         num_recruits = max(0, int((random.randint(1, 20) + charisma_modifier)/5))
-        total_roll = roll + charisma_modifier
 
         with transaction.atomic():
             for _ in range(num_recruits):
@@ -46,8 +44,7 @@ def start_recruit_population(realm: Realm, post_data):
                 )
         
         if num_recruits > 0:
-            # message = f"Successfully recruited {num_recruits} {target_race_obj.name}!"
-            message = f" (Roll: {roll} + {charisma_modifier} = {total_roll}). You successfully recruited {num_recruits} {target_race_obj.name} units!"
+            message = f"Successfully recruited {num_recruits} {target_race_obj.name}!"
             return True, message, None # Indicate success with message
         else:
             message = f"Recruitment attempt for {target_race_obj.name} yielded no new population (Charisma: {charisma_modifier})."
@@ -213,9 +210,9 @@ def start_buy_goods(realm: Realm, post_data):
         acquired_quantity = 0 # Initialize acquired quantity to 0
 
         with transaction.atomic(): # Ensure atomicity for treasury deduction and goods addition
-            # # Deduct Gold from Treasury
-            # realm.treasury -= total_gold_cost
-            # realm.save() # Save realm to update treasury
+            # Deduct Gold from Treasury
+            realm.treasury -= total_gold_cost
+            realm.save() # Save realm to update treasury
 
             if total_roll >= success_threshold:
                 # Success
