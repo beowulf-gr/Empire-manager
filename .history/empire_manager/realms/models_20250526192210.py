@@ -120,11 +120,11 @@ class Realm(models.Model):
         
         # Stronghold improvements upkeep
         for stronghold_instance in self.strongholds.all(): # strongholds is the related_name
-            for improvement_instance in stronghold_instance.improvements.all(): # improvements is the related_name
+            for improvement_instance in stronghold_instance.improvements.filter(is_active=True):
                 if improvement_instance.improvement_type:
-                    total_gold_upkeep += Decimal(improvement_instance.improvement_type.gold_upkeep_cost)
+                    total_gold_upkeep += Decimal(improvement_instance.improvement_type.gold_upkeep_cost_per_season)
                     
-        return total_gold_upkeep.quantize(Decimal('0.01'))
+        return total_gold_upkeep.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     @property
     def yearly_food_costs(self):

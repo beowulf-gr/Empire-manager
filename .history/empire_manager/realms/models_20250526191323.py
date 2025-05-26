@@ -87,64 +87,8 @@ class Realm(models.Model):
     loyalty_population = models.IntegerField(default=0)
     loyalty_military = models.IntegerField(default=0)
     loyalty_mercenaries = models.IntegerField(default=0)
-
-    @property
-    def total_living_space(self):
-        """
-        Calculates the sum of total_population_capacity for all land units in this realm.
-        """
-        total_space = 0
-        # self.land_units is the reverse manager from LandUnit.realm
-        # Ensure LandUnit has the 'total_population_capacity' property defined.
-        # Using .all() is good practice if you might prefetch or filter later,
-        # but direct iteration also works.
-        for land_unit_instance in self.land_units.all():
-            total_space += land_unit_instance.total_population_capacity
-        return total_space
-    
-    @property
-    def yearly_gold_costs(self):
-        """
-        Calculates the total gold upkeep costs per season/turn for the realm.
-        This includes mercenary units, military units, and stronghold improvements.
-        """
-        total_gold_upkeep = Decimal('0.00')
-
-        # Mercenary upkeep
-        for mercenary_unit in self.mercenary_units.all(): # mercenary_units is the related_name
-            total_gold_upkeep += mercenary_unit.calculated_gold_cost_upkeep
-
-        # Military unit upkeep
-        for military_unit in self.military_units.all(): # military_units is the related_name
-            total_gold_upkeep += Decimal(military_unit.calculated_gold_cost_upkeep)
-        
-        # Stronghold improvements upkeep
-        for stronghold_instance in self.strongholds.all(): # strongholds is the related_name
-            for improvement_instance in stronghold_instance.improvements.all(): # improvements is the related_name
-                if improvement_instance.improvement_type:
-                    total_gold_upkeep += Decimal(improvement_instance.improvement_type.gold_upkeep_cost)
-                    
-        return total_gold_upkeep.quantize(Decimal('0.01'))
-
-    @property
-    def yearly_food_costs(self):
-        """
-        Calculates the total food upkeep costs per season/turn for the realm.
-        This includes mercenary units and military units.
-        """
-        total_food_upkeep = Decimal('0.00')
-
-        # Mercenary upkeep
-        for mercenary_unit in self.mercenary_units.all(): # mercenary_units is the related_name
-            total_food_upkeep += mercenary_unit.total_food_cost_upkeep
-            
-        # Military unit upkeep
-        for military_unit in self.military_units.all(): # military_units is the related_name
-            if military_unit.unit_type:
-                total_food_upkeep += Decimal(military_unit.unit_type.base_food_cost_upkeep * military_unit.quantity)
-
-        return total_food_upkeep.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
+    yearly_gold_costs = models.IntegerField(default=0, help_text="Total gold costs for the realm per year.")
+    yearly_food_costs = models.IntegerField(default=0, help_text="Total food costs for the realm per year.")
 
     def __str__(self):
         return self.name

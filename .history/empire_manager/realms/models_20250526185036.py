@@ -87,64 +87,8 @@ class Realm(models.Model):
     loyalty_population = models.IntegerField(default=0)
     loyalty_military = models.IntegerField(default=0)
     loyalty_mercenaries = models.IntegerField(default=0)
-
-    @property
-    def total_living_space(self):
-        """
-        Calculates the sum of total_population_capacity for all land units in this realm.
-        """
-        total_space = 0
-        # self.land_units is the reverse manager from LandUnit.realm
-        # Ensure LandUnit has the 'total_population_capacity' property defined.
-        # Using .all() is good practice if you might prefetch or filter later,
-        # but direct iteration also works.
-        for land_unit_instance in self.land_units.all():
-            total_space += land_unit_instance.total_population_capacity
-        return total_space
-    
-    @property
-    def yearly_gold_costs(self):
-        """
-        Calculates the total gold upkeep costs per season/turn for the realm.
-        This includes mercenary units, military units, and stronghold improvements.
-        """
-        total_gold_upkeep = Decimal('0.00')
-
-        # Mercenary upkeep
-        for mercenary_unit in self.mercenary_units.all(): # mercenary_units is the related_name
-            total_gold_upkeep += mercenary_unit.calculated_gold_cost_upkeep
-
-        # Military unit upkeep
-        for military_unit in self.military_units.all(): # military_units is the related_name
-            total_gold_upkeep += Decimal(military_unit.calculated_gold_cost_upkeep)
-        
-        # Stronghold improvements upkeep
-        for stronghold_instance in self.strongholds.all(): # strongholds is the related_name
-            for improvement_instance in stronghold_instance.improvements.all(): # improvements is the related_name
-                if improvement_instance.improvement_type:
-                    total_gold_upkeep += Decimal(improvement_instance.improvement_type.gold_upkeep_cost)
-                    
-        return total_gold_upkeep.quantize(Decimal('0.01'))
-
-    @property
-    def yearly_food_costs(self):
-        """
-        Calculates the total food upkeep costs per season/turn for the realm.
-        This includes mercenary units and military units.
-        """
-        total_food_upkeep = Decimal('0.00')
-
-        # Mercenary upkeep
-        for mercenary_unit in self.mercenary_units.all(): # mercenary_units is the related_name
-            total_food_upkeep += mercenary_unit.total_food_cost_upkeep
-            
-        # Military unit upkeep
-        for military_unit in self.military_units.all(): # military_units is the related_name
-            if military_unit.unit_type:
-                total_food_upkeep += Decimal(military_unit.unit_type.base_food_cost_upkeep * military_unit.quantity)
-
-        return total_food_upkeep.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
+    yearly_gold_costs = models.IntegerField(default=0, help_text="Total gold costs for the realm per year.")
+    yearly_food_costs = models.IntegerField(default=0, help_text="Total food costs for the realm per year.")
 
     def __str__(self):
         return self.name
@@ -227,7 +171,8 @@ class LandUnitType(models.Model):
     name = models.CharField(max_length=100, unique=True)
     production = models.JSONField(default=dict)
     harvest = models.IntegerField(default=1)
-    base_population_capacity = models.IntegerField(default=1)
+    settlement_capacity = models.IntegerField(default=1)
+    #choices = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return self.name
@@ -250,28 +195,8 @@ class LandUnit(models.Model):
 
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE, related_name='land_units')
 
-    @property
-    def total_population_capacity(self):
-        """
-        Calculates the total population capacity for this land unit.
-        It's the land unit type's base capacity, plus stronghold bonus (if any),
-        plus any specific land unit modifiers (if defined).
-        """
-        if not self.unit_type: # Should have a unit_type
-            return 0
-            
-        capacity = self.unit_type.base_population_capacity
-        
-        # Add stronghold bonus if a stronghold exists on this land unit
-        try:
-            # self.stronghold is the reverse accessor from StrongholdInstance.land_unit
-            if hasattr(self, 'stronghold') and self.stronghold: 
-                capacity += self.stronghold.stronghold_type.population_capacity_bonus
-        except models.ObjectDoesNotExist: # More specific: StrongholdInstance.DoesNotExist
-            # This handles the case where the related stronghold might not exist or is None
-            pass
-        
-        return int(capacity)
+    def can_produce(self):
+        return len(self.assigned_population) >= self.harvest
 
     def _assign_mineral_type(self):
         roll = random.randint(1, 100)
@@ -379,14 +304,14 @@ class MercenaryUnitSize(models.Model):
     def __str__(self):
         return self.name
 
-class RealmMercenaryUnit(models.Model):
+class MercenaryUnitType(models.Model):
     """
-    An instance of a mercenary unit currently hired by a realm.
+    Defines types of mercenary units available for hire.
+    Costs are now largely derived from Challenge Rating and MercenaryUnitSize.
     """
     race = models.ForeignKey(PopulationRace, on_delete=models.SET_NULL, null=True, blank=True)
     mercenary_size = models.ForeignKey(MercenaryUnitSize, on_delete=models.PROTECT, related_name="unit_types")
     challenge_rating = models.DecimalField(max_digits=5, decimal_places=2, default=1.0, help_text="A measure of the unit's overall combat effectiveness. Can be fractional (e.g., 0.5 for CR 1/2).")
-    realm = models.ForeignKey(Realm, on_delete=models.CASCADE, related_name='mercenary_units')
 
     @property
     def calculated_gold_cost_upkeep(self):
@@ -404,11 +329,21 @@ class RealmMercenaryUnit(models.Model):
             return self.mercenary_size.food_cost_upkeep
         return Decimal('0.00')
 
+    def __str__(self):
+        return f"{self.name} ({self.race.name if self.race else 'Mixed Race'} - {self.mercenary_size.name})"
+
+class RealmMercenaryUnit(models.Model):
+    """
+    An instance of a mercenary unit currently hired by a realm.
+    """
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE, related_name='mercenary_units')
+    unit_type = models.ForeignKey(MercenaryUnitType, on_delete=models.PROTECT)
+
     class Meta:
         verbose_name_plural = "Realm Mercenary Units"
 
     def __str__(self):
-        return f"{self.mercenary_size} {self.race} unit for {self.realm.name}"
+        return f"{self.unit_type.mercenary_size} {self.unit_type.race} unit for {self.realm.name}"
     
 class MilitaryUnitSize(models.Model):
     """
@@ -425,16 +360,15 @@ class MilitaryUnitSize(models.Model):
     def __str__(self):
         return self.name
 
-class RealmMilitaryUnit(models.Model):
+class MilitaryUnitType(models.Model):
     """
-    An instance of a realm's own military unit.
+    Defines types of military units that can be trained by a realm.
     """
     race = models.ForeignKey(PopulationRace, on_delete=models.SET_NULL, null=True, blank=True)
     military_size = models.ForeignKey(MilitaryUnitSize, on_delete=models.PROTECT, related_name="unit_types")
     level = models.PositiveIntegerField(default=1, help_text="Base level of the unit type, affects stats and costs.")
 
-    realm = models.ForeignKey(Realm, on_delete=models.CASCADE, related_name='military_units')
-    
+    # Upkeep Costs (per year)
     @property
     def calculated_gold_cost_upkeep(self):
         """Calculates gold cost for recruitment based on CR and size modifier."""
@@ -451,8 +385,29 @@ class RealmMilitaryUnit(models.Model):
             return self.military_size.food_cost_upkeep
         return 0
 
+    def __str__(self):
+        return f"{self.name} ({self.race.name if self.race else 'Generic'})"
+
+class RealmMilitaryUnit(models.Model):
+    """
+    An instance of a realm's own military unit.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE, related_name='military_units')
+    unit_type = models.ForeignKey(MilitaryUnitType, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField(default=0)
+    level = models.PositiveIntegerField(default=1, help_text="Current veterancy level of the unit.")
+    experience = models.PositiveIntegerField(default=0, help_text="Experience points towards next level.")
+    location = models.ForeignKey(LandUnit, on_delete=models.SET_NULL, null=True, blank=True, related_name='stationed_military_units')
+    # current_hit_points = models.PositiveIntegerField(null=True, blank=True) # To track damage if units are not just abstract quantities
+
     class Meta:
         verbose_name_plural = "Realm Military Units"
 
+    # def save(self, *args, **kwargs):
+    #     if self.current_hit_points is None:
+    #         self.current_hit_points = self.unit_type.base_hit_points * self.quantity # Initial HP
+    #     super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Lvl {self.level} {self.military_size.name} {self.race} unit of {self.realm.name}"
+        return f"{self.quantity}x Lvl {self.level} {self.unit_type.name} of {self.realm.name}"
