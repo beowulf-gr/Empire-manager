@@ -343,11 +343,11 @@ class StrongholdImprovementType(models.Model):
     duration_seasons = models.PositiveIntegerField(default=1, help_text="Number of seasons (turns) it takes to build/upgrade.")
     population_cost = models.PositiveIntegerField(default=1, help_text="Population units required for construction/upgrade.")
     resource_costs = models.JSONField(default=dict, help_text="JSON dictionary of resource costs, e.g., {'Wood': 20, 'Iron': 10, 'Gold': 50}")
-    gold_cost = models.PositiveIntegerField(default=0, help_text="Gold cost for construction.")
     gold_upkeep_cost = models.PositiveIntegerField(default=0, help_text="Gold upkeep cost per year after construction.")
 
     # Prerequisites
     prerequisite_stronghold_types = models.ManyToManyField(StrongholdType, blank=True, help_text="Stronghold types required to build this improvement.")
+    # prerequisite_other_improvements = models.ManyToManyField('self', symmetrical=False, blank=True, help_text="Other improvements required.") # If needed
 
     def __str__(self):
         return self.name

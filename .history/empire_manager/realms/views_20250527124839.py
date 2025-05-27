@@ -1153,6 +1153,14 @@ def edit_population(request, realm_name=None):
 
     return render(request, 'realms/edit/edit_population.html', {'formset': formset})
 
+# ACTION_MODULES = {
+#     "Spring": spring_actions,
+#     "Summer": summer_actions,
+#     "Fall": fall_actions,
+#     "Winter": winter_actions,
+#     "All": generic_actions,
+# }
+
 MODULE_MAPPING = {
     "spring_actions": spring_actions,
     "summer_actions": summer_actions,

@@ -348,6 +348,7 @@ class StrongholdImprovementType(models.Model):
 
     # Prerequisites
     prerequisite_stronghold_types = models.ManyToManyField(StrongholdType, blank=True, help_text="Stronghold types required to build this improvement.")
+    # prerequisite_other_improvements = models.ManyToManyField('self', symmetrical=False, blank=True, help_text="Other improvements required.") # If needed
 
     def __str__(self):
         return self.name

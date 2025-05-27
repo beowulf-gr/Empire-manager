@@ -13,7 +13,7 @@ class Command(BaseCommand):
             {"name": "Plains", "production": {"Food": 4}, "harvest": 1, "base_population_capacity": 4},
             {"name": "Mountains - Stone", "production": {"Stone": 4}, "harvest": 2, "base_population_capacity": 2},
             {"name": "Mountains - Minerals", "production": {"minerals": 2}, "harvest": 2, "base_population_capacity": 2},
-            {"name": "Ruins", "production": {"Gold":random.randint(1, 6)}, "harvest": 2, "base_population_capacity": 2},
+            {"name": "Ruins", "production": {"Gold":random.randint(1, 10)-4}, "harvest": 2, "base_population_capacity": 2},
             {"name": "Wasteland", "production": {}, "harvest": 0, "base_population_capacity": 1},
             {"name": "Swamp", "production": {"Gold":1, "Food": 1}, "harvest": 2, "base_population_capacity": 1},
             {"name": "Water", "production": {"Food":2}, "harvest": 1, "base_population_capacity": 1},
