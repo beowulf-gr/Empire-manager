@@ -376,10 +376,6 @@
                 buyResourcesCostPreview.style.display = 'none'; // For Buy Resources
                 buyGoodsCostPreview.style.display = 'none'; // For Buy Goods
 
-                if (action.inputs && action.inputs.length > 0) {
-                    await buildDynamicInputs(action, dynamicInputsDiv);
-                } 
-
                 if (actionKey === "buy_resources") { // Handle "Buy Resources" action
                     dynamicInputsDiv.innerHTML = `
                         <label for="resource_id_buy">Resource Type:</label>
@@ -445,13 +441,16 @@
                     // Initial update call
                     updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
                     buyGoodsCostPreview.style.display = 'block'; // Show external buy resources preview container
+
+                } else if (actionKey === "recruit_population") {
+                    await buildDynamicInputs(action, dynamicInputsDiv);
                 }
-                // else {
-                //     // Generic actions with standard inputs (or no inputs)
-                //     if (action.inputs && action.inputs.length > 0) {
-                //         await buildDynamicInputs(action, dynamicInputsDiv);
-                //     }
-                // }
+                else {
+                    // Generic actions with standard inputs (or no inputs)
+                    if (action.inputs && action.inputs.length > 0) {
+                        await buildDynamicInputs(action, dynamicInputsDiv);
+                    }
+                }
                 unifiedActionModal.style.display = 'flex';
                 formSubmitButton.style.display = 'block';
             });
@@ -477,7 +476,7 @@
                     // costPreview.style.display = 'none';
                     buyResourcesCostPreview.style.display = 'none';
                     // tradePreview.style.display = 'none';
-                    unifiedActionModal.style.display = 'flex';
+                    unifiedActionModal.style.display = 'block';
                 }
             });
         });
@@ -489,7 +488,7 @@
             // Hide all preview elements on close
             // costPreview.style.display = 'none';
             buyResourcesCostPreview.style.display = 'none';
-            // tradePreview.style.display = 'none';
+            tradePreview.style.display = 'none';
         });
 
         // Close modal by clicking outside
@@ -498,9 +497,9 @@
                 unifiedActionModal.style.display = 'none';
                 formSubmitButton.style.display = 'block';
                 // Hide all preview elements on close
-                // costPreview.style.display = 'none';
+                costPreview.style.display = 'none';
                 buyResourcesCostPreview.style.display = 'none';
-                // tradePreview.style.display = 'none';
+                tradePreview.style.display = 'none';
             }
         });
 

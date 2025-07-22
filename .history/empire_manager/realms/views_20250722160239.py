@@ -1174,7 +1174,7 @@ def player_actions(request, realm_name):
     # Convert the QuerySet to a list of dictionaries for the template's JSON.
     # Note: We now use 'action_key' which is the primary key of ActionType.
     available_actions_details = list(available_actions.values(
-        'action_key', 'name', 'description', 'duration', 'submit_text', 'inputs'
+        'action_key', 'name', 'description', 'duration'
     ))
     active_ongoing_actions = OngoingAction.objects.filter(realm=realm, completed=False)
     
@@ -1206,63 +1206,6 @@ def player_actions(request, realm_name):
     }
 
     return render(request, 'realms/player_actions.html', context)
-    # active_ongoing_actions = OngoingAction.objects.filter(realm=realm, completed=False)
-
-    # # 2. Prepare ongoing actions for display with their proper display names
-    # ongoing_actions_for_display = []
-    # for action_record in active_ongoing_actions:
-    #     # Find the action definition using the slug stored in action_record.action_type
-    #     action_definition = None
-    #     for key, definition in ALL_GAME_ACTIONS.items():
-    #         if definition['slug'] == action_record.action_name:
-    #             action_definition = definition
-    #             break
-
-    #     if action_definition:
-    #         # Calculate remaining duration if needed, or pass the total duration and let template calculate
-    #         # For simplicity, let's just pass the duration for now.
-    #         ongoing_actions_for_display.append({
-    #             'display_name': action_definition['name'], # Get the readable name
-    #             'start_season': action_record.start_season,
-    #             'start_year': action_record.start_year,
-    #             'duration': action_record.duration,
-    #             'id': action_record.id, # Keep ID for potential future use (e.g., cancelling)
-    #             # You can add remaining_seasons here if you calculate it in Python
-    #         })
-    #     else:
-    #         print(f"Warning: Action definition not found for ongoing action slug: {action_record.action_name}")
-    #         # Fallback for display if definition is missing
-    #         ongoing_actions_for_display.append({
-    #             'display_name': action_record.action_name, # Use slug as fallback
-    #             'start_season': action_record.start_season,
-    #             'start_year': action_record.start_year,
-    #             'duration': action_record.duration,
-    #             'id': action_record.id,
-    #         })
-
-    # # Get action slugs for the current season and "All" actions
-    # available_action_display_names = SEASONAL_ACTIONS.get(realm.season, []) + SEASONAL_ACTIONS.get("All", [])
-    # available_actions_details = []
-    # for display_name in available_action_display_names:
-    #     action_data = ALL_GAME_ACTIONS.get(display_name)
-    #     if action_data:
-    #         available_actions_details.append(action_data)
-    #     else:
-    #         print(f"Warning: Action definition not found in ALL_GAME_ACTIONS for '{display_name}'")
-
-    # # Serialize available_actions_details for JavaScript
-    # # Using json.dumps and mark_safe for robustness
-    # available_actions_json = json.dumps(available_actions_details)
-    # available_actions_json_safe = mark_safe(available_actions_json)
-
-    # context = {
-    #     'realm': realm,
-    #     'ongoing_actions': ongoing_actions_for_display,
-    #     'available_actions': available_actions_details, # Still pass this for template iteration
-    #     'available_actions_json': available_actions_json_safe, # Pass the JSON string for JavaScript
-    # }
-
-    # return render(request, 'realms/player_actions.html', context)
 
 def end_turn(request, realm_name):
     realm = get_object_or_404(Realm, name=realm_name)
@@ -1305,23 +1248,21 @@ def end_turn(request, realm_name):
 def start_action(request, realm_name):
     realm = get_object_or_404(Realm, name=realm_name)
     if request.method == "POST":
-        # The form now submits the 'action_key' as 'action_name'
-        action_key = request.POST.get("action_name")
-
-        try:
-            # Verify the action exists in the database
-            action_type = ActionType.objects.get(pk=action_key)
-        except ActionType.DoesNotExist:
-            messages.error(request, f"Action '{action_key}' not found.")
-            return redirect('player_actions', realm_name=realm_name)
+        action_display_name = request.POST.get("action_name") # This is the display name (e.g., "Recruit Population")
         
-        # Look up the handler for this action key
-        handler_info = ACTION_HANDLERS.get(action_key)
+        # Look up the action's full definition using its display name
+        action_definition = ALL_GAME_ACTIONS.get(action_display_name)
+
+        if not action_definition:
+            messages.error(request, f"Action '{action_display_name}' not found.")
+            return redirect('player_actions', realm_name=realm_name)
+
+        action_slug = action_definition['slug'] # Get the slug (e.g., "recruit_population")
+        handler_info = ACTION_HANDLERS.get(action_slug)
 
         if not handler_info:
-            messages.error(request, f"Handler for action '{action_type.name}' not configured.")
+            messages.error(request, f"Handler for action '{action_display_name}' not configured.")
             return redirect('player_actions', realm_name=realm_name)
-
 
         module_name = handler_info['module']
         start_func_name = handler_info['start_func']
@@ -1343,19 +1284,22 @@ def start_action(request, realm_name):
         success, message, action_data_for_ongoing = start_func(realm, request.POST)
 
         if success:
-            if action_type.duration == 0:
+            if action_definition['duration'] == 0:
+                # Instant action: effects already applied by start_func, just display message
                 messages.success(request, message)
             else:
+                # Duration-based action: create OngoingAction
+                duration = action_definition['duration']
                 OngoingAction.objects.create(
                     realm=realm,
-                    action_name=action_key,
+                    action_type=action_slug, # Store the slug
                     start_season=realm.season,
                     start_year=realm.year,
-                    duration=action_type.duration,
-                    data=action_data_for_ongoing
+                    duration=duration,
+                    data=action_data_for_ongoing # Store data from start_func for finish_func
                 )
-                messages.success(request, message)
-                messages.info(request, f"Action '{action_type.name}' started. It will complete in {action_type.duration} season(s).")
+                messages.success(request, message) # Success message from start_func
+                messages.info(request, f"Action '{action_display_name}' started. It will complete in {duration} season(s).")
         else:
             # Action failed, display error message from start_func
             messages.error(request, message)

@@ -522,9 +522,6 @@ class ActionType(models.Model):
                                   help_text="A unique key for game logic, e.g., 'buy_resources'.")
     name = models.CharField(max_length=100)
     description = models.TextField()
-    submit_text = models.CharField(max_length=50, default="Start Action") # <-- ADD THIS
-    inputs = models.JSONField(default=list, blank=True, 
-                              help_text="A list of input field definitions for the action form.")
     duration = models.PositiveIntegerField(default=0)
 
     # Link to Descriptors (e.g., "Trade", "Population")

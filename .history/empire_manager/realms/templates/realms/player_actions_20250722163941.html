@@ -352,14 +352,12 @@
         // Main event listener for action buttons
         actionButtons.forEach(button => {
             button.addEventListener('click', async function(event) {
-                // const actionSlug = this.getAttribute('data-action-slug');
-                // const actionName = this.getAttribute('data-action-name');
-                // const action = actionsMap.get(actionName); // Get full action definition
-                const actionKey = this.getAttribute('data-action-slug');
-                const action = actionsMap.get(actionKey);
+                const actionSlug = this.getAttribute('data-action-slug');
+                const actionName = this.getAttribute('data-action-name');
+                const action = actionsMap.get(actionName); // Get full action definition
 
                 if (!action) {
-                    console.error("Action details not found for:", actionKey);
+                    console.error("Action details not found for:", actionName);
                     return;
                 }
 
@@ -376,11 +374,7 @@
                 buyResourcesCostPreview.style.display = 'none'; // For Buy Resources
                 buyGoodsCostPreview.style.display = 'none'; // For Buy Goods
 
-                if (action.inputs && action.inputs.length > 0) {
-                    await buildDynamicInputs(action, dynamicInputsDiv);
-                } 
-
-                if (actionKey === "buy_resources") { // Handle "Buy Resources" action
+                if (actionSlug === "buy_resources") { // Handle "Buy Resources" action
                     dynamicInputsDiv.innerHTML = `
                         <label for="resource_id_buy">Resource Type:</label>
                         <select id="resource_id_buy" name="resource_id" required>
@@ -413,7 +407,7 @@
                     updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
                     buyResourcesCostPreview.style.display = 'block'; // Show external buy resources preview container
 
-                } else if (actionKey === "buy_goods") { // Handle "Buy Goods" action
+                } else if (actionSlug === "buy_goods") { // Handle "Buy Goods" action
                     dynamicInputsDiv.innerHTML = `
                         <label for="goods_type_id_buy">Trade Good Type:</label>
                         <select id="goods_type_id_buy" name="goods_type_id" required>
@@ -445,13 +439,16 @@
                     // Initial update call
                     updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
                     buyGoodsCostPreview.style.display = 'block'; // Show external buy resources preview container
+
+                } else if (actionSlug === "recruit_population") {
+                    await buildDynamicInputs(action, dynamicInputsDiv);
                 }
-                // else {
-                //     // Generic actions with standard inputs (or no inputs)
-                //     if (action.inputs && action.inputs.length > 0) {
-                //         await buildDynamicInputs(action, dynamicInputsDiv);
-                //     }
-                // }
+                else {
+                    // Generic actions with standard inputs (or no inputs)
+                    if (action.inputs && action.inputs.length > 0) {
+                        await buildDynamicInputs(action, dynamicInputsDiv);
+                    }
+                }
                 unifiedActionModal.style.display = 'flex';
                 formSubmitButton.style.display = 'block';
             });
@@ -462,11 +459,7 @@
             link.addEventListener('click', function(event) {
                 event.preventDefault();
                 const actionName = this.getAttribute('data-action');
-                const action = actionsMap.get(actionName); // Get full action definition by name
-                if (!action) {
-                    console.error("Action details not found for:", actionName);
-                    return;
-                }
+                const action = actionsMap.get(actionName);
                 if (action) {
                     modalTitle.textContent = action.name + " (Details)";
                     modalDescription.textContent = action.description + " Duration: " + action.duration + " season(s).";
@@ -474,10 +467,10 @@
                     dynamicInputsDiv.innerHTML = '';
                     formSubmitButton.style.display = 'none';
                     // Hide all preview elements
-                    // costPreview.style.display = 'none';
+                    costPreview.style.display = 'none';
                     buyResourcesCostPreview.style.display = 'none';
-                    // tradePreview.style.display = 'none';
-                    unifiedActionModal.style.display = 'flex';
+                    tradePreview.style.display = 'none';
+                    unifiedActionModal.style.display = 'block';
                 }
             });
         });
@@ -487,9 +480,9 @@
             unifiedActionModal.style.display = 'none';
             formSubmitButton.style.display = 'block';
             // Hide all preview elements on close
-            // costPreview.style.display = 'none';
+            costPreview.style.display = 'none';
             buyResourcesCostPreview.style.display = 'none';
-            // tradePreview.style.display = 'none';
+            tradePreview.style.display = 'none';
         });
 
         // Close modal by clicking outside
@@ -498,9 +491,9 @@
                 unifiedActionModal.style.display = 'none';
                 formSubmitButton.style.display = 'block';
                 // Hide all preview elements on close
-                // costPreview.style.display = 'none';
+                costPreview.style.display = 'none';
                 buyResourcesCostPreview.style.display = 'none';
-                // tradePreview.style.display = 'none';
+                tradePreview.style.display = 'none';
             }
         });
 

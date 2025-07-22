@@ -242,7 +242,6 @@
 
     <script>
         // Access realm.treasury directly from Django context
-        // const currentTreasury = {{ realm.treasury|default:0 }};
         const currentTreasury = parseFloat(document.getElementById('realm-info').dataset.treasury);
 
         // --- Global DOM element references (define once) ---
@@ -260,23 +259,23 @@
         const endSeasonBtn = document.getElementById('end-season-btn');
         const availableActionsData = JSON.parse(document.getElementById('available-actions-data').textContent);
 
-        // Preview elements (always exist, hidden/shown as needed)
-        const buyResourcesCostPreview = document.getElementById('buy-resources-cost-preview'); // For Buy Resources
-        const buyGoodsCostPreview = document.getElementById('buy-goods-cost-preview'); // For Buy Resources
+        // Preview elements
+        const buyResourcesCostPreview = document.getElementById('buy-resources-cost-preview');
+        const buyGoodsCostPreview = document.getElementById('buy-goods-cost-preview');
 
-        // Map to quickly find action details by slug or name
+        // Map to quickly find action details
         const actionsMap = new Map();
         availableActionsData.forEach(action => {
             actionsMap.set(action.name, action);
-            actionsMap.set(action.action_key, action); // <-- Change to 'action_key'
+            actionsMap.set(action.action_key, action); // Use action_key
         });
 
         // Store fetched data for client-side calculations
-        let allGoodsTypesData = []; // Populated by get_goods_types_json
-        let allResourcesData = []; // Populated by get_resource_types_json
-        let allPopulationRacesData = []; // Populated by get_population_races_json
+        let allGoodsTypesData = [];
+        let allResourcesData = [];
+        let allPopulationRacesData = [];
 
-        // Helper function to fetch options for a select dropdown
+        // --- (The fetchSelectOptions and buildDynamicInputs functions remain the same) ---
         async function fetchSelectOptions(url, selectElement) {
             try {
                 const response = await fetch(url);
@@ -286,31 +285,28 @@
                     const opt = document.createElement('option');
                     opt.value = option.id;
                     opt.textContent = option.name;
-                    // Store relevant data directly in the array that will be filtered
                     if (url.includes('get_resource_types_json')) {
-                        // Ensure 'value' is a number for calculation
-                        option.value_numeric = parseFloat(option.value); // Convert to float if not already
+                        option.value_numeric = parseFloat(option.value);
                         allResourcesData.push(option);
                     } else if (url.includes('get_goods_types_json')) {
-                        // Ensure 'value' is a number for calculation
-                        option.value_numeric = parseFloat(option.value); // Convert to float if not already
+                        option.value_numeric = parseFloat(option.value);
                         allGoodsTypesData.push(option);
                     } else if (url.includes('get_population_races_json')) {
                         allPopulationRacesData.push(option);
                     }
                     selectElement.appendChild(opt);
                 });
-                return data; // Return data for chaining or storing
+                return data;
             } catch (error) {
                 console.error("Error fetching options from " + url + ":", error);
                 selectElement.innerHTML = '<option value="" disabled selected>Error loading options</option>';
-                return []; // Return empty array on error
+                return [];
             }
         }
 
-        // Helper function to build dynamic input fields for a generic action
         async function buildDynamicInputs(action, containerDiv) {
-            containerDiv.innerHTML = ''; // Clear existing inputs
+            containerDiv.innerHTML = '';
+            if (!action.inputs) return; // Handle actions with no inputs
             for (const inputDef of action.inputs) {
                 const label = document.createElement('label');
                 label.setAttribute('for', inputDef.name);
@@ -320,28 +316,15 @@
                 let inputElement;
                 if (inputDef.type === 'select') {
                     inputElement = document.createElement('select');
-                    inputElement.id = inputDef.name;
-                    inputElement.name = inputDef.name;
-                    if (inputDef.required) inputElement.required = true;
-                    // Dynamically fetch options based on options_url (for select types)
                     await fetchSelectOptions(inputDef.options_url, inputElement);
-                } else if (inputDef.type === 'number') {
+                } else {
                     inputElement = document.createElement('input');
-                    inputElement.type = 'number';
-                    inputElement.id = inputDef.name;
-                    inputElement.name = inputDef.name;
-                    if (inputDef.required) inputElement.required = true;
-                    if (inputDef.default !== undefined) inputElement.value = inputDef.default;
-                    if (inputDef.min !== undefined) inputElement.min = inputDef.min;
-                    if (inputDef.max !== undefined) inputElement.max = inputDef.max;
-                } else { // Default to text
-                    inputElement = document.createElement('input');
-                    inputElement.type = 'text';
-                    inputElement.id = inputDef.name;
-                    inputElement.name = inputDef.name;
-                    if (inputDef.required) inputElement.required = true;
-                    if (inputDef.default !== undefined) inputElement.value = inputDef.default;
+                    inputElement.type = inputDef.type || 'text';
                 }
+                inputElement.id = inputDef.name;
+                inputElement.name = inputDef.name;
+                if (inputDef.required) inputElement.required = true;
+                if (inputDef.default !== undefined) inputElement.value = inputDef.default;
                 containerDiv.appendChild(inputElement);
                 containerDiv.appendChild(document.createElement('br'));
                 containerDiv.appendChild(document.createElement('br'));
@@ -349,12 +332,9 @@
         }
 
 
-        // Main event listener for action buttons
+        // --- ACTION BUTTONS (to perform an action) ---
         actionButtons.forEach(button => {
             button.addEventListener('click', async function(event) {
-                // const actionSlug = this.getAttribute('data-action-slug');
-                // const actionName = this.getAttribute('data-action-name');
-                // const action = actionsMap.get(actionName); // Get full action definition
                 const actionKey = this.getAttribute('data-action-slug');
                 const action = actionsMap.get(actionKey);
 
@@ -363,148 +343,60 @@
                     return;
                 }
 
-                // Reset modal for new action
+                // Populate modal with data from the action object
                 modalTitle.textContent = action.name;
                 modalDescription.textContent = action.description;
-                formActionType.value = action.action_key; // Use display name for submission
+                formActionType.value = action.action_key; // Submit the key
                 formDuration.value = action.duration;
-                formSubmitButton.textContent = action.submit_text;
-                dynamicInputsDiv.innerHTML = ''; // Clear previous inputs
-                formSubmitButton.style.display = 'block'; // Ensure submit button is visible
+                
+                // ### FIX FOR BLANK BUTTON ###
+                formSubmitButton.textContent = action.submit_text; // Set button text
 
-                // Hide all preview elements by default, specific logic will show them
-                buyResourcesCostPreview.style.display = 'none'; // For Buy Resources
-                buyGoodsCostPreview.style.display = 'none'; // For Buy Goods
+                // Build the form inputs
+                await buildDynamicInputs(action, dynamicInputsDiv);
 
-                if (action.inputs && action.inputs.length > 0) {
-                    await buildDynamicInputs(action, dynamicInputsDiv);
-                } 
-
-                if (actionKey === "buy_resources") { // Handle "Buy Resources" action
-                    dynamicInputsDiv.innerHTML = `
-                        <label for="resource_id_buy">Resource Type:</label>
-                        <select id="resource_id_buy" name="resource_id" required>
-                            <option value="" disabled selected>Select Resource Type</option>
-                        </select><br><br>
-
-                        <label for="quantity_buy">Quantity:</label>
-                        <input type="number" id="quantity_buy" name="quantity" value="1" min="1" required><br><br>
-
-                        <label for="knowledge_economics_modifier_buy">Knowledge (Economics) Modifier:</label>
-                        <input type="number" id="knowledge_economics_modifier_buy" name="knowledge_economics_modifier" value="0" required><br><br>
-                        
-                        <p>Current Treasury: ${currentTreasury.toLocaleString()} Gold</p>
-                        <p id="buy-resources-cost-preview-internal"></p> {# Cost preview for buy resources #}
-                    `;
-                    // Re-get references to newly created elements inside the modal
-                    const newResourceIdSelect = document.getElementById('resource_id_buy');
-                    const newQuantityInput = document.getElementById('quantity_buy');
-                    const newKnowledgeModifierInput = document.getElementById('knowledge_economics_modifier_buy');
-                    const newBuyResourcesCostPreviewInternal = document.getElementById('buy-resources-cost-preview-internal');
-
-                    await fetchSelectOptions("{% url 'get_resource_types_json' %}", newResourceIdSelect);
-                    
-                    // Add event listeners for cost preview
-                    newResourceIdSelect.onchange = () => updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
-                    newQuantityInput.oninput = () => updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
-                    newKnowledgeModifierInput.oninput = () => updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
-                    
-                    // Initial update call
-                    updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
-                    buyResourcesCostPreview.style.display = 'block'; // Show external buy resources preview container
-
-                } else if (actionKey === "buy_goods") { // Handle "Buy Goods" action
-                    dynamicInputsDiv.innerHTML = `
-                        <label for="goods_type_id_buy">Trade Good Type:</label>
-                        <select id="goods_type_id_buy" name="goods_type_id" required>
-                            <option value="" disabled selected>Select Trade Good Type</option>
-                        </select><br><br>
-
-                        <label for="quantity_buy">Quantity:</label>
-                        <input type="number" id="quantity_buy" name="quantity" value="1" min="1" required><br><br>
-
-                        <label for="knowledge_economics_modifier_buy">Knowledge (Economics) Modifier:</label>
-                        <input type="number" id="knowledge_economics_modifier_buy" name="knowledge_economics_modifier" value="0" required><br><br>
-                        
-                        <p>Current Treasury: ${currentTreasury.toLocaleString()} Gold</p>
-                        <p id="buy-goods-cost-preview-internal"></p> {# Cost preview for buy Goods #}
-                    `;
-                    // Re-get references to newly created elements inside the modal
-                    const newGoodsTypeSelect = document.getElementById('goods_type_id_buy');
-                    const newQuantityInput = document.getElementById('quantity_buy');
-                    const newKnowledgeModifierInput = document.getElementById('knowledge_economics_modifier_buy');
-                    const newBuyGoodsCostPreviewInternal = document.getElementById('buy-goods-cost-preview-internal');
-
-                    await fetchSelectOptions("{% url 'get_goods_types_json' %}", newGoodsTypeSelect);
-                    
-                    // Add event listeners for cost preview
-                    newGoodsTypeSelect.onchange = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
-                    newQuantityInput.oninput = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
-                    newKnowledgeModifierInput.oninput = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
-                    
-                    // Initial update call
-                    updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
-                    buyGoodsCostPreview.style.display = 'block'; // Show external buy resources preview container
-                }
-                // else {
-                //     // Generic actions with standard inputs (or no inputs)
-                //     if (action.inputs && action.inputs.length > 0) {
-                //         await buildDynamicInputs(action, dynamicInputsDiv);
-                //     }
-                // }
-                unifiedActionModal.style.display = 'flex';
+                // Show form and button, hide previews initially
                 formSubmitButton.style.display = 'block';
+                buyResourcesCostPreview.style.display = 'none';
+                buyGoodsCostPreview.style.display = 'none';
+                
+                unifiedActionModal.style.display = 'flex';
             });
         });
 
-        // Handle clicking the "Details" link (just shows description, no form)
+        // --- DETAILS LINKS (to view info) ---
         actionDetailsLinks.forEach(link => {
             link.addEventListener('click', function(event) {
                 event.preventDefault();
                 const actionName = this.getAttribute('data-action');
-                const action = actionsMap.get(actionName); // Get full action definition by name
-                if (!action) {
-                    console.error("Action details not found for:", actionName);
-                    return;
-                }
+                const action = actionsMap.get(actionName);
+
                 if (action) {
                     modalTitle.textContent = action.name + " (Details)";
-                    modalDescription.textContent = action.description + " Duration: " + action.duration + " season(s).";
-                    // Hide form elements if just showing details
+                    
+                    // ### FIX FOR DETAILS LINK ###
+                    // Correctly use the description and duration from the action object
+                    modalDescription.textContent = action.description + " | Duration: " + action.duration + " season(s).";
+                    
+                    // Hide the form part of the modal
                     dynamicInputsDiv.innerHTML = '';
                     formSubmitButton.style.display = 'none';
-                    // Hide all preview elements
-                    // costPreview.style.display = 'none';
-                    buyResourcesCostPreview.style.display = 'none';
-                    // tradePreview.style.display = 'none';
                     unifiedActionModal.style.display = 'flex';
                 }
             });
         });
 
-        // Universal close button for the unified modal
+        // --- (The rest of your script: close buttons, End Season, preview functions, etc. remain the same) ---
         closeButton.addEventListener('click', function() {
             unifiedActionModal.style.display = 'none';
-            formSubmitButton.style.display = 'block';
-            // Hide all preview elements on close
-            // costPreview.style.display = 'none';
-            buyResourcesCostPreview.style.display = 'none';
-            // tradePreview.style.display = 'none';
         });
 
-        // Close modal by clicking outside
         window.addEventListener('click', function(event) {
             if (event.target === unifiedActionModal) {
                 unifiedActionModal.style.display = 'none';
-                formSubmitButton.style.display = 'block';
-                // Hide all preview elements on close
-                // costPreview.style.display = 'none';
-                buyResourcesCostPreview.style.display = 'none';
-                // tradePreview.style.display = 'none';
             }
         });
 
-        // End Season button
         endSeasonBtn.addEventListener('click', function() {
             if (confirm("Are you sure you want to end the current season?")) {
                 window.location.href = "{% url 'end_turn' realm_name=realm.name %}";

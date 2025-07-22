@@ -191,27 +191,12 @@ class Realm(models.Model):
         realm_goods.quantity += amount
         realm_goods.save()
 
-    # def next_season(self):
-    #     seasons = ["Spring", "Summer", "Autumn", "Winter"]
-    #     current_index = seasons.index(self.season)
-    #     next_index = (current_index + 1) % 4
-    #     self.season = seasons[next_index]
-    #     if self.season == "Spring":
-    #         self.year += 1
-    #     self.save()
-    
     def next_season(self):
-        # NEW refactored logic
-        try:
-            # Get the next season by order, wrapping around if necessary
-            next_season_order = (self.season.order % 4) + 1
-            next_season_obj = Season.objects.get(order=next_season_order)
-            self.season = next_season_obj
-        except Season.DoesNotExist:
-            # Fallback to the first season if something is wrong
-            self.season = Season.objects.order_by('order').first()
-
-        if self.season.name == "Spring":
+        seasons = ["Spring", "Summer", "Autumn", "Winter"]
+        current_index = seasons.index(self.season)
+        next_index = (current_index + 1) % 4
+        self.season = seasons[next_index]
+        if self.season == "Spring":
             self.year += 1
         self.save()
 
@@ -224,11 +209,7 @@ class Realm(models.Model):
 class OngoingAction(models.Model):
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     action_name = models.CharField(max_length=100)  # e.g., "construct_farm", "train_units"
-    start_season = models.ForeignKey(
-        'Season',
-        on_delete=models.PROTECT,
-        null=True # Allow null temporarily for migration
-    )
+    start_season = models.CharField(max_length=10)
     start_year = models.IntegerField()
     duration = models.IntegerField(default=1)  # Duration in seasons
     completed = models.BooleanField(default=False)
@@ -238,26 +219,12 @@ class OngoingAction(models.Model):
     def __str__(self):
         return f"{self.action_name} for {self.realm.name} (Started {self.start_season} Year {self.start_year})"
 
-    # def is_completed(self, current_season, current_year):
-    #     seasons = ["Spring", "Summer", "Autumn", "Winter"]
-    #     start_index = seasons.index(self.start_season)
-    #     current_index = seasons.index(current_season)
-
-    #     elapsed_years = current_year - self.start_year
-    #     elapsed_seasons = elapsed_years * 4 + (current_index - start_index)
-
-    #     return elapsed_seasons >= self.duration
-
-    def is_completed(self, current_season_obj, current_year):
-        # Refactored to accept the current season object directly
-        if not self.start_season:
-            return False
-         
-        start_index = self.start_season.order
-        current_index = current_season_obj.order
+    def is_completed(self, current_season, current_year):
+        seasons = ["Spring", "Summer", "Autumn", "Winter"]
+        start_index = seasons.index(self.start_season)
+        current_index = seasons.index(current_season)
 
         elapsed_years = current_year - self.start_year
-        # This logic handles year rollovers correctly
         elapsed_seasons = elapsed_years * 4 + (current_index - start_index)
 
         return elapsed_seasons >= self.duration
@@ -522,9 +489,6 @@ class ActionType(models.Model):
                                   help_text="A unique key for game logic, e.g., 'buy_resources'.")
     name = models.CharField(max_length=100)
     description = models.TextField()
-    submit_text = models.CharField(max_length=50, default="Start Action") # <-- ADD THIS
-    inputs = models.JSONField(default=list, blank=True, 
-                              help_text="A list of input field definitions for the action form.")
     duration = models.PositiveIntegerField(default=0)
 
     # Link to Descriptors (e.g., "Trade", "Population")

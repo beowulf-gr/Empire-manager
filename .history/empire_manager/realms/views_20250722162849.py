@@ -1174,7 +1174,7 @@ def player_actions(request, realm_name):
     # Convert the QuerySet to a list of dictionaries for the template's JSON.
     # Note: We now use 'action_key' which is the primary key of ActionType.
     available_actions_details = list(available_actions.values(
-        'action_key', 'name', 'description', 'duration', 'submit_text', 'inputs'
+        'action_key', 'name', 'description', 'duration'
     ))
     active_ongoing_actions = OngoingAction.objects.filter(realm=realm, completed=False)
     

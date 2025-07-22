@@ -87,8 +87,8 @@ def start_buy_resources(realm: Realm, post_data):
 
         # Calculate total cost in Gold for the goods (based on GoodsType.value)
         precise_total_cost_decimal = resource_type_obj.value * Decimal(quantity)
-        total_gold_cost = int(min(precise_total_cost_decimal.quantize(Decimal('1.'), rounding=ROUND_HALF_UP), 1))
-        #total_gold_cost = precise_total_cost_decimal
+        #total_gold_cost = int(precise_total_cost_decimal.quantize(Decimal('1.'), rounding=ROUND_FLOOR))
+        total_gold_cost = precise_total_cost_decimal
         print("Total cost:", total_gold_cost)
         
         # Check if realm has enough Gold in treasury
@@ -183,7 +183,7 @@ def start_buy_goods(realm: Realm, post_data):
 
         # Calculate total cost in Gold for the goods (based on GoodsType.value)
         precise_total_cost_decimal = good_type_obj.value * Decimal(quantity)
-        total_gold_cost = int(min(precise_total_cost_decimal.quantize(Decimal('1.'), rounding=ROUND_HALF_UP), 1))
+        total_gold_cost = int(precise_total_cost_decimal.quantize(Decimal('1.'), rounding=ROUND_FLOOR))
         
         # Check if realm has enough Gold in treasury
         current_gold_in_treasury = realm.treasury
