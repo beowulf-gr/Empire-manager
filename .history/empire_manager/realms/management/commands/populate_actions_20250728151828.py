@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 "submit_text": "Start Construction",
                 "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Autumn"], # All seasons 
                 "seasonal_modifications": {
-                    "Fall": {"duration_add": 2}, 
+                    "Winter": {"duration_add": 2}, 
                     "Summer": {"duration_add": 1}
                 },
                 "inputs": [
@@ -62,7 +62,6 @@ class Command(BaseCommand):
                     'description': action_data['description'],
                     'duration': action_data['duration'],
                     'submit_text': action_data['submit_text'],
-                    "seasonal_modifications": action_data.get('seasonal_modifications', {}),
                     'inputs': action_data.get('inputs', []),
                 }
             )

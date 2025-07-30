@@ -327,11 +327,11 @@
                     // Dynamically fetch options based on options_url (for select types)
 
                     let url = inputDef.options_url;
-                    if (url.includes('placeholder')) {
+                    if (url.includes('get_land_units_json')) {
                         // Dynamically insert the current realm's name into the URL
-                        url = url.replace('placeholder', realmName); // Replace the placeholder
+                        url = url.replace('The-Swamp', realmName); // Replace the placeholder
             }
-                    await fetchSelectOptions(url, inputElement);
+                    await fetchSelectOptions(inputDef.options_url, inputElement);
                 } else if (inputDef.type === 'number') {
                     inputElement = document.createElement('input');
                     inputElement.type = 'number';

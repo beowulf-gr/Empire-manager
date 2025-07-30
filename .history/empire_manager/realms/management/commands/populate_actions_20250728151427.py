@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 "submit_text": "Start Construction",
                 "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Autumn"], # All seasons 
                 "seasonal_modifications": {
-                    "Fall": {"duration_add": 2}, 
+                    "Winter": {"duration_add": 2}, 
                     "Summer": {"duration_add": 1}
                 },
                 "inputs": [
@@ -55,14 +55,13 @@ class Command(BaseCommand):
         ]
 
         for action_data in actions_to_create:
-            action, created = ActionType.objects.update_or_create(
+            action, created = ActionType.objects.get_or_create(
                 action_key=action_data['action_key'],
                 defaults={
                     'name': action_data['name'],
                     'description': action_data['description'],
                     'duration': action_data['duration'],
                     'submit_text': action_data['submit_text'],
-                    "seasonal_modifications": action_data.get('seasonal_modifications', {}),
                     'inputs': action_data.get('inputs', []),
                 }
             )

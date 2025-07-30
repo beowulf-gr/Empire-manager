@@ -1356,7 +1356,7 @@ def start_action(request, realm_name):
                     data=action_data_for_ongoing
                 )
                 messages.success(request, message)
-                messages.info(request, f"Action '{action_type.name}' started. It will complete in {duration} season(s).")
+                messages.info(request, f"Action '{action_type.name}' started. It will complete in {action_type.duration} season(s).")
         else:
             # Action failed, display error message from start_func
             messages.error(request, message)

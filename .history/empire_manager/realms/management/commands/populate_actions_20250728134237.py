@@ -34,13 +34,9 @@ class Command(BaseCommand):
             },
             {
                 "action_key": "construct_stronghold", "name": "Construct Stronghold",
-                "description": "Build a new stronghold on an available land unit. Costs and duration vary by the type of stronghold selected.", "duration": 1,
+                "description": "Build a new stronghold on an available land unit. Costs and duration vary by the type of stronghold selected.", "duration": 0,
                 "submit_text": "Start Construction",
                 "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Autumn"], # All seasons 
-                "seasonal_modifications": {
-                    "Fall": {"duration_add": 2}, 
-                    "Summer": {"duration_add": 1}
-                },
                 "inputs": [
                     {
                         "name": "stronghold_type", "label": "Stronghold Type:", "type": "select", 
@@ -55,14 +51,13 @@ class Command(BaseCommand):
         ]
 
         for action_data in actions_to_create:
-            action, created = ActionType.objects.update_or_create(
+            action, created = ActionType.objects.get_or_create(
                 action_key=action_data['action_key'],
                 defaults={
                     'name': action_data['name'],
                     'description': action_data['description'],
                     'duration': action_data['duration'],
                     'submit_text': action_data['submit_text'],
-                    "seasonal_modifications": action_data.get('seasonal_modifications', {}),
                     'inputs': action_data.get('inputs', []),
                 }
             )

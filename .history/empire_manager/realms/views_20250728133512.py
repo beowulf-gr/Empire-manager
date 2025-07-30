@@ -1346,17 +1346,16 @@ def start_action(request, realm_name):
             if action_type.duration == 0:
                 messages.success(request, message)
             else:
-                duration = action_data_for_ongoing.get('final_duration', action_type.duration)
                 OngoingAction.objects.create(
                     realm=realm,
                     action_name=action_key,
                     start_season=realm.season,
                     start_year=realm.year,
-                    duration=duration,
+                    duration=action_type.duration,
                     data=action_data_for_ongoing
                 )
                 messages.success(request, message)
-                messages.info(request, f"Action '{action_type.name}' started. It will complete in {duration} season(s).")
+                messages.info(request, f"Action '{action_type.name}' started. It will complete in {action_type.duration} season(s).")
         else:
             # Action failed, display error message from start_func
             messages.error(request, message)

@@ -269,20 +269,6 @@ def start_construct_stronghold(realm: Realm, post_data):
         for resource, cost in stronghold_type.resource_costs.items():
             if realm.get_resource_quantity(resource) < cost:
                 return False, f"Not enough {resource}. Requires {cost}.", None
-            
-        # --- 2 DYNAMIC DURATION LOGIC ---
-        # 1. Get the base duration from the selected StrongholdType
-        duration = stronghold_type.duration_seasons
-
-        # 2. Check for seasonal modifications from the ActionType
-        # We need the ActionType object for 'construct_stronghold'
-        action_type = ActionType.objects.get(action_key='construct_stronghold')
-        current_season_name = realm.season.name
-        
-        if current_season_name in action_type.seasonal_modifications:
-            mods = action_type.seasonal_modifications[current_season_name]
-            duration += mods.get('duration_add', 0) # Add the extra duration
-        # -----------------------------
         
         # --- 2. Pay Costs ---
         with transaction.atomic():
@@ -292,13 +278,12 @@ def start_construct_stronghold(realm: Realm, post_data):
             realm.save()
 
         # --- 3. Return Success and Data for OngoingAction ---
-        message = f"Construction of {stronghold_type.name} has begun at {land_unit.name} and will be finished in {duration} seasons."
+        message = f"Construction of {stronghold_type.name} has begun at {land_unit.name}."
         
         # Pass the necessary IDs to the finish function via the 'data' field
         action_data = {
             'stronghold_type_id': stronghold_type.id,
-            'land_unit_id': land_unit.id,
-            'final_duration': duration # Pass the calculated duration
+            'land_unit_id': land_unit.id
         }
         
         return True, message, action_data
