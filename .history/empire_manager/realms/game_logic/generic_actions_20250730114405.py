@@ -256,29 +256,12 @@ def start_construct_stronghold(realm: Realm, post_data):
     land_unit_id = post_data.get('land_unit')
     assigned_pop_ids = post_data.getlist('assigned_population')
 
-    if not all([stronghold_type_id, land_unit_id, assigned_pop_ids]):
-        return False, "You must select a type, location, and assign population units.", None
+    if not stronghold_type_id or not land_unit_id:
+        return False, "You must select a stronghold type and a location.", None
 
     try:
         stronghold_type = StrongholdType.objects.get(id=stronghold_type_id)
         land_unit = LandUnit.objects.get(id=land_unit_id, realm=realm)
-
-        # --- 1. Validate Population Selection ---
-        required_pop = stronghold_type.population_cost
-        if len(assigned_pop_ids) != required_pop:
-            return False, f"Incorrect number of population units assigned. This construction requires {required_pop}.", None
-
-        # Fetch the actual PopulationUnit objects to ensure they are valid
-        units_to_assign = PopulationUnit.objects.filter(
-            id__in=assigned_pop_ids, 
-            realm=realm, 
-            status='idle'
-        )
-
-        # If the query returned fewer units than selected, it means some were invalid
-        if units_to_assign.count() != required_pop:
-            return False, "Invalid or busy population units selected. Please refresh and try again.", None
-
         
         # --- 1. Check Prerequisites ---
         if realm.treasury < stronghold_type.gold_cost:
@@ -307,18 +290,16 @@ def start_construct_stronghold(realm: Realm, post_data):
             realm.treasury -= stronghold_type.gold_cost
             for resource, cost in stronghold_type.resource_costs.items():
                 realm.update_resource_quantity(resource, -cost)
-
-            units_to_assign.update(status='busy')
             realm.save()
-            
 
         # --- 3. Return Success and Data for OngoingAction ---
-        message = f"Construction of {stronghold_type.name} has begun at {land_unit.name}, assigning {required_pop} selected population unit(s) and will be finished in {duration} seasons."       
+        message = f"Construction of {stronghold_type.name} has begun at {land_unit.name} and will be finished in {duration} seasons."
+        
+        # Pass the necessary IDs to the finish function via the 'data' field
         action_data = {
             'stronghold_type_id': stronghold_type.id,
-            'land_unit_id': int(land_unit_id),
-            'assigned_pop_ids': [int(pid) for pid in assigned_pop_ids],
-            'final_duration': stronghold_type.duration_seasons # Pass the correct duration
+            'land_unit_id': land_unit.id,
+            'final_duration': duration # Pass the calculated duration
         }
         
         return True, message, action_data
@@ -327,7 +308,7 @@ def start_construct_stronghold(realm: Realm, post_data):
         return False, "Invalid stronghold type or land unit selected.", None
 
 
-def finish_construct_stronghold(realm: Realm, action_data: dict, completed_action: OngoingAction):
+def finish_construct_stronghold(realm: Realm, action_data: dict):
     """
     Finishes the construction, creating a new StrongholdInstance.
     """
@@ -344,11 +325,6 @@ def finish_construct_stronghold(realm: Realm, action_data: dict, completed_actio
             stronghold_type=stronghold_type,
             realm=realm
         )
-
-        for unit in completed_action.assigned_population.all():
-            unit.status = 'idle'
-            unit.save()
-
         print(f"Completed stronghold '{stronghold_type.name}' for realm '{realm.name}'.")
 
     except (StrongholdType.DoesNotExist, LandUnit.DoesNotExist):

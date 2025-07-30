@@ -1292,7 +1292,7 @@ def end_turn(request, realm_name):
                 if module_obj:
                     finish_func = getattr(module_obj, finish_func_name, None)
                     if finish_func:
-                        finish_func(realm, action_record.data or {}, completed_action=action_record) # Pass realm and action_record.data
+                        finish_func(realm, action_record.data) # Pass realm and action_record.data
                     else:
                         print(f"Error: Finish function '{finish_func_name}' not found in module '{module_name}'.")
                 else:
@@ -1343,26 +1343,20 @@ def start_action(request, realm_name):
         success, message, action_data_for_ongoing = start_func(realm, request.POST)
 
         if success:
-            if action_type.duration == 0 and not (action_data_for_ongoing and 'final_duration' in action_data_for_ongoing):
+            if action_type.duration == 0:
                 messages.success(request, message)
             else:
-                with transaction.atomic():
-                    duration = action_data_for_ongoing.get('final_duration', action_type.duration)
-                    new_action = OngoingAction.objects.create(
-                        realm=realm,
-                        action_name=action_key,
-                        start_season=realm.season,
-                        start_year=realm.year,
-                        duration=duration,
-                        data=action_data_for_ongoing
-                    )
-
-                    # If population was assigned, link them to the action
-                    if 'assigned_pop_ids' in action_data_for_ongoing:
-                        pop_units = PopulationUnit.objects.filter(id__in=action_data_for_ongoing['assigned_pop_ids'])
-                        new_action.assigned_population.set(pop_units)
-                    messages.success(request, message)
-                    messages.info(request, f"Action '{action_type.name}' started. It will complete in {duration} season(s).")
+                duration = action_data_for_ongoing.get('final_duration', action_type.duration)
+                OngoingAction.objects.create(
+                    realm=realm,
+                    action_name=action_key,
+                    start_season=realm.season,
+                    start_year=realm.year,
+                    duration=duration,
+                    data=action_data_for_ongoing
+                )
+                messages.success(request, message)
+                messages.info(request, f"Action '{action_type.name}' started. It will complete in {duration} season(s).")
         else:
             # Action failed, display error message from start_func
             messages.error(request, message)

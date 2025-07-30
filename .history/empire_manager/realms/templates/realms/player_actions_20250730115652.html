@@ -261,8 +261,6 @@
         const endSeasonBtn = document.getElementById('end-season-btn');
         const availableActionsData = JSON.parse(document.getElementById('available-actions-data').textContent);
 
-         let allIdlePopulation = []; // Global store for available population units
-
         // Preview elements (always exist, hidden/shown as needed)
         const buyResourcesCostPreview = document.getElementById('buy-resources-cost-preview'); // For Buy Resources
         const buyGoodsCostPreview = document.getElementById('buy-goods-cost-preview'); // For Buy Resources
@@ -309,32 +307,6 @@
                 selectElement.innerHTML = '<option value="" disabled selected>Error loading options</option>';
                 return []; // Return empty array on error
             }
-        }
-
-        // ### NEW: Function to update population dropdowns to be exclusive ###
-        function updatePopulationDropdowns() {
-            const popSelects = document.querySelectorAll('.population-select');
-            const selectedValues = new Set();
-
-            // First, find all values that are currently selected in any dropdown
-            popSelects.forEach(select => {
-                if (select.value) {
-                    selectedValues.add(select.value);
-                }
-            });
-
-            // Now, update the options in every dropdown
-            popSelects.forEach(select => {
-                const currentSelection = select.value;
-                for (const option of select.options) {
-                    // Show the option if it's not selected elsewhere, OR if it's the one currently selected in THIS dropdown
-                    if (!selectedValues.has(option.value) || option.value === currentSelection) {
-                        option.style.display = '';
-                    } else {
-                        option.style.display = 'none';
-                    }
-                }
-            });
         }
 
         // Helper function to build dynamic input fields for a generic action
@@ -416,7 +388,7 @@
                 }
                 
                 if (actionKey === 'construct_stronghold') {
-                // 1. Create the initial, static dropdowns
+                // 1. Create the initial dropdowns
                 dynamicInputsDiv.innerHTML = `
                     <label for="stronghold_type">Stronghold Type:</label>
                     <select id="stronghold_type" name="stronghold_type" required></select>
@@ -424,71 +396,55 @@
                     <label for="land_unit">Location (Land Unit):</label>
                     <select id="land_unit" name="land_unit" required></select>
                     <br><br>
-                    <div id="population-dropdown-container"></div>
+                    <div id="population-checklist-container"></div>
                 `;
 
-                // 2. Get references to the new elements
+                // 2. Populate the dropdowns
                 const strongholdSelect = document.getElementById('stronghold_type');
                 const landUnitSelect = document.getElementById('land_unit');
-                const popContainer = document.getElementById('population-dropdown-container');
-
-                // 3. Populate the static dropdowns
+                const popContainer = document.getElementById('population-checklist-container');
+                
                 await fetchSelectOptions("{% url 'get_stronghold_types_json' %}", strongholdSelect);
                 await fetchSelectOptions("{% url 'get_land_units_json' realm_name=realm.name %}", landUnitSelect);
 
-                // Fetch all idle population units once and store them
-                const idlePopRes = await fetch(`/realm/${realmName}/get_idle_population_json/`);
-                allIdlePopulation = await idlePopRes.json();
-
-                // 4. Add an event listener to the stronghold dropdown
+                // 3. Add an event listener to the stronghold dropdown
                 strongholdSelect.addEventListener('change', async function() {
                     const strongholdId = this.value;
-                    popContainer.innerHTML = ''; // Clear previous dropdowns
-                    if (!strongholdId) return;
+                    if (!strongholdId) {
+                        popContainer.innerHTML = ''; // Clear if nothing is selected
+                        return;
+                    }
                     
+                    // Fetch details about the selected stronghold
                     const strongholdDetailsRes = await fetch(`/realm/get_stronghold_type_details_json/${strongholdId}/`);
                     const strongholdDetails = await strongholdDetailsRes.json();
                     const requiredPop = strongholdDetails.population_cost;
 
-                    if (allIdlePopulation.length < requiredPop) {
-                        popContainer.innerHTML = `<p style="color: red;">Not enough idle population! Requires ${requiredPop}, but only ${allIdlePopulation.length} available.</p>`;
+                    // Fetch idle population
+                    const idlePopRes = await fetch(`/realm/{{realm.name}}/get_idle_population_json/`);
+                    const idlePop = await idlePopRes.json();
+
+                    // Build the checklist
+                    let checklistHTML = `<p>Select exactly ${requiredPop} population unit(s):</p>`;
+                    if (idlePop.length < requiredPop) {
+                        checklistHTML = `<p style="color: red;">Not enough idle population! Requires ${requiredPop}, but only ${idlePop.length} available.</p>`;
                         formSubmitButton.disabled = true;
-                        return;
-                    }
-
-                    formSubmitButton.disabled = false;
-                    popContainer.innerHTML = `<p>Assign ${requiredPop} population unit(s):</p>`;
-
-                    // 5. Create a dropdown for each required population unit
-                    for (let i = 0; i < requiredPop; i++) {
-                        const newLabel = document.createElement('label');
-                        newLabel.textContent = `Unit #${i + 1}:`;
-                        
-                        const newSelect = document.createElement('select');
-                        newSelect.name = 'assigned_population'; // Same name for all
-                        newSelect.className = 'population-select'; // Class for easy selection
-                        newSelect.required = true;
-                        
-                        // Add a default, empty option
-                        newSelect.innerHTML = '<option value="" selected>-- Select a Unit --</option>';
-
-                        // Populate with all available idle units
-                        allIdlePopulation.forEach(unit => {
-                            newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`;
+                    } else {
+                        idlePop.forEach(unit => {
+                            checklistHTML += `
+                                <label>
+                                    <input type="checkbox" name="assigned_population" value="${unit.id}">
+                                    ${unit.display_name}
+                                </label><br>
+                            `;
                         });
-
-                        // Add the new dropdown to the page
-                        popContainer.appendChild(newLabel);
-                        popContainer.appendChild(newSelect);
-                        popContainer.appendChild(document.createElement('br'));
-
-                        // Add the event listener to update other dropdowns on change
-                        newSelect.addEventListener('change', updatePopulationDropdowns);
+                        formSubmitButton.disabled = false;
                     }
+                    popContainer.innerHTML = checklistHTML;
                 });
+            } else {
 
-
-                } else if (actionKey === "buy_resources") { // Handle "Buy Resources" action
+                if (actionKey === "buy_resources") { // Handle "Buy Resources" action
                     dynamicInputsDiv.innerHTML = `
                         <label for="resource_id_buy">Resource Type:</label>
                         <select id="resource_id_buy" name="resource_id" required>

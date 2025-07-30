@@ -307,21 +307,32 @@ def start_construct_stronghold(realm: Realm, post_data):
             realm.treasury -= stronghold_type.gold_cost
             for resource, cost in stronghold_type.resource_costs.items():
                 realm.update_resource_quantity(resource, -cost)
-
-            units_to_assign.update(status='busy')
             realm.save()
+
+            # Create the OngoingAction
+            action_data = {
+                'stronghold_type_id': stronghold_type.id,
+                'land_unit_id': land_unit.id
+            }
+
+            new_action = OngoingAction.objects.create(
+                realm=realm,
+                action_name='construct_stronghold',
+                start_season=realm.season,
+                start_year=realm.year,
+                duration=duration,
+                data=action_data
+            )
+
+            # Assign the user-selected population units
+            new_action.assigned_population.set(units_to_assign)
             
+            # Set their status to busy
+            units_to_assign.update(status='busy')
 
         # --- 3. Return Success and Data for OngoingAction ---
         message = f"Construction of {stronghold_type.name} has begun at {land_unit.name}, assigning {required_pop} selected population unit(s) and will be finished in {duration} seasons."       
-        action_data = {
-            'stronghold_type_id': stronghold_type.id,
-            'land_unit_id': int(land_unit_id),
-            'assigned_pop_ids': [int(pid) for pid in assigned_pop_ids],
-            'final_duration': stronghold_type.duration_seasons # Pass the correct duration
-        }
-        
-        return True, message, action_data
+        return True, message, None
         
     except (StrongholdType.DoesNotExist, LandUnit.DoesNotExist):
         return False, "Invalid stronghold type or land unit selected.", None
