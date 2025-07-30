@@ -345,15 +345,14 @@ def finish_construct_stronghold(realm: Realm, action_data: dict, completed_actio
         StrongholdInstance.objects.create(
             land_unit=land_unit,
             stronghold_type=stronghold_type,
-            realm=realm,
-            name=stronghold_name # <-- Use the captured name here
+            realm=realm
         )
 
         for unit in completed_action.assigned_population.all():
             unit.status = 'idle'
             unit.save()
 
-        print(f"Completed stronghold '{stronghold_name or stronghold_type.name}' for realm '{realm.name}'.")
+        print(f"Completed stronghold '{stronghold_type.name}' for realm '{realm.name}'.")
 
     except (StrongholdType.DoesNotExist, LandUnit.DoesNotExist):
         print(f"ERROR: Could not complete stronghold for realm '{realm.name}'. Invalid type or land unit ID.")

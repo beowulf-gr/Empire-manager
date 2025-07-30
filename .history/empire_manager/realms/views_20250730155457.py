@@ -630,7 +630,7 @@ def realm_detail(request, name):
         'population_unit_summary': population_unit_summary,
         'resources_summary': resources_summary, # Pass new summary
         'goods_summary': goods_summary, # Pass new summary
-        'strongholds': strongholds,  # Pass strongholds
+        'strongholds': strongholds,
     }
     return render(request, 'realms/realm_detail.html', context)
 
