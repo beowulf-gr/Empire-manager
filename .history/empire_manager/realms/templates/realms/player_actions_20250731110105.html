@@ -337,33 +337,6 @@
             });
         }
 
-        function updateLandUnitDropdowns() {
-            const landUnitSelects = document.querySelectorAll('.road-land-unit-select');
-            const selectedValues = new Set();
-
-            // Find all currently selected land unit values
-            landUnitSelects.forEach(select => {
-                if (select.value) {
-                    selectedValues.add(select.value);
-                }
-            });
-
-            // Loop through each dropdown and hide/show options
-            landUnitSelects.forEach(select => {
-                const currentSelection = select.value;
-                for (const option of select.options) {
-                    if (!option.value) continue; // Skip the placeholder option
-                    // Show the option if it's not selected elsewhere, OR if it's the current selection in THIS dropdown
-                    if (!selectedValues.has(option.value) || option.value === currentSelection) {
-                        option.style.display = '';
-                    } else {
-                        option.style.display = 'none';
-                    }
-                }
-            });
-        }
-
-
         // Helper function to build dynamic input fields for a generic action
         async function buildDynamicInputs(action, containerDiv) {
             containerDiv.innerHTML = ''; // Clear existing inputs
@@ -547,8 +520,6 @@
                             select.innerHTML += `<option value="${unit.id}" data-has-stronghold="${unit.has_stronghold}">${unit.name}</option>`;
                         });
                         landUnitContainer.appendChild(select);
-
-                        select.addEventListener('change', updateLandUnitDropdowns);
                     }
 
                     // Function to recalculate and render population dropdowns

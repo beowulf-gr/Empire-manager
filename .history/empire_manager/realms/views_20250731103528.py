@@ -14,7 +14,7 @@ from .game_logic.action_definitions import ACTION_HANDLERS
 from django.core.serializers import serialize
 from django.utils.safestring import mark_safe
 from django.db import transaction # Import for atomic operations
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q
 
 @require_POST
 def delete_realm(request, name):
@@ -1294,15 +1294,8 @@ def get_road_eligible_land_units_json(request, realm_name):
     Returns a list of land units that do not already have roads.
     """
     realm = get_object_or_404(Realm, name=realm_name)
-    # Annotate each LandUnit with a boolean indicating if a related StrongholdInstance exists
-    land_units_with_stronghold_info = LandUnit.objects.filter(
-        realm=realm, 
-        has_roads=False
-    ).annotate(
-        has_stronghold=Exists(StrongholdInstance.objects.filter(land_unit=OuterRef('pk')))
-    ).values('id', 'name', 'has_stronghold') # <-- Include has_stronghold in the values
-
-    return JsonResponse(list(land_units_with_stronghold_info), safe=False)
+    land_units = LandUnit.objects.filter(realm=realm, has_roads=False).values('id', 'name')
+    return JsonResponse(list(land_units), safe=False)
 
 def get_mine_eligible_land_units_json(request, realm_name):
     """

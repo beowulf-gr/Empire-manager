@@ -420,16 +420,11 @@ def start_build_mine(realm: Realm, post_data):
         return False, "Invalid land unit selected.", None
 
     # Costs
-    stone_cost, gold_cost, wood_cost = 4, 3, 3
+    pop_cost, stone_cost, gold_cost, wood_cost = 1, 4, 3, 3
 
     # Check population and resources
-    required_pop = 1 # Static cost for mines
-    if len(assigned_pop_ids) != required_pop:
-        return False, "You must assign exactly one population unit to build a mine.", None
-
-    units_to_assign = PopulationUnit.objects.filter(id__in=assigned_pop_ids, realm=realm, status='idle')
-    if units_to_assign.count() != required_pop:
-        return False, "The selected population unit is invalid or busy.", None
+    if PopulationUnit.objects.filter(realm=realm, status='idle').count() < pop_cost:
+        return False, "Not enough idle population.", None
     if realm.get_resource_quantity("Stone") < stone_cost or realm.treasury < gold_cost or realm.get_resource_quantity("Wood") < wood_cost:
         return False, "Not enough resources.", None
 
@@ -440,11 +435,13 @@ def start_build_mine(realm: Realm, post_data):
         realm.update_resource_quantity("Wood", -wood_cost)
         
         # Assign population
-        units_to_assign.update(status='busy')
+        unit_to_assign = PopulationUnit.objects.filter(realm=realm, status='idle').first()
+        unit_to_assign.status = 'busy'
+        unit_to_assign.save()
 
     action_data = {
         'land_unit_id': land_unit.id,
-        'assigned_pop_ids': [unit.id for unit in units_to_assign]
+        'assigned_pop_ids': [unit_to_assign.id]
     }
     return True, f"Mine construction has begun on {land_unit.name}.", action_data
 

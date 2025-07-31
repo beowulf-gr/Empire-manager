@@ -547,8 +547,6 @@
                             select.innerHTML += `<option value="${unit.id}" data-has-stronghold="${unit.has_stronghold}">${unit.name}</option>`;
                         });
                         landUnitContainer.appendChild(select);
-
-                        select.addEventListener('change', updateLandUnitDropdowns);
                     }
 
                     // Function to recalculate and render population dropdowns
