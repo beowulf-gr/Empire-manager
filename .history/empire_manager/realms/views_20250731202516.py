@@ -1336,10 +1336,6 @@ def preview_action_cost(request, realm_name):
         elif action_key == 'build_mine':
             # We will call a dedicated function to calculate the cost
             costs = calculate_build_mine_cost()
-        elif action_key == 'construct_stronghold':
-            stronghold_type_id = data.get('stronghold_type_id')
-            if stronghold_type_id:
-                costs = calculate_construct_stronghold_cost(realm, stronghold_type_id)
             
         # Add 'else if' blocks here for other actions with dynamic costs
             

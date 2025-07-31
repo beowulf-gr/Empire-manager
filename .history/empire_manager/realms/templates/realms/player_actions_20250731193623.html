@@ -238,24 +238,21 @@
         </div>
     </div>
 
-    <div id="realm-info" data-treasury="{{ realm.treasury|default:0 }}" style="display:none;"></div>
+    <!-- <div id="realm-info" data-treasury="{{ realm.treasury|default:0 }}" style="display:none;"></div> -->
 
     <div id="game-data"
         data-realm-name="{{ realm.name }}"
         data-csrf-token="{{ csrf_token }}"
-        data-treasury="{{ realm.treasury|default:0 }}"
         data-preview-url="{% url 'preview_action_cost' realm_name=realm.name %}"
         data-idle-pop-url="{% url 'get_idle_population_json' realm_name=realm.name %}"
         data-land-units-url="{% url 'get_land_units_json' realm_name=realm.name %}"
         data-stronghold-types-url="{% url 'get_stronghold_types_json' %}"
         data-road-eligible-url="{% url 'get_road_eligible_land_units_json' realm_name=realm.name %}"
         data-mine-eligible-url="{% url 'get_mine_eligible_land_units_json' realm_name=realm.name %}"
-        data-resource-types-url="{% url 'get_resource_types_json' %}"
-        data-goods-types-url="{% url 'get_goods_types_json' %}"
         style="display: none;">
     </div>
 
-    
+    {% load static %}
     <script src="{% static 'js/player_actions.js' %}"></script>
 
 </body>

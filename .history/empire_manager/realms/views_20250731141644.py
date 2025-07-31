@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 import random
 from .game_logic import generic_actions, summer_actions
-from .game_logic.generic_actions import calculate_build_roads_cost, calculate_build_mine_cost, calculate_construct_stronghold_cost
+from .game_logic.generic_actions import calculate_build_roads_cost
 #from .game_logic.action_definitions import SEASONAL_ACTIONS, ALL_GAME_ACTIONS, ACTION_HANDLERS
 from .game_logic.action_definitions import ACTION_HANDLERS
 from django.core.serializers import serialize
@@ -1333,13 +1333,6 @@ def preview_action_cost(request, realm_name):
             land_unit_ids = data.get('land_unit_ids', [])
             # We will call a dedicated function to calculate the cost
             costs = calculate_build_roads_cost(realm, land_unit_ids)
-        elif action_key == 'build_mine':
-            # We will call a dedicated function to calculate the cost
-            costs = calculate_build_mine_cost()
-        elif action_key == 'construct_stronghold':
-            stronghold_type_id = data.get('stronghold_type_id')
-            if stronghold_type_id:
-                costs = calculate_construct_stronghold_cost(realm, stronghold_type_id)
             
         # Add 'else if' blocks here for other actions with dynamic costs
             

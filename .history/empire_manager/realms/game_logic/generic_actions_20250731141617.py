@@ -246,22 +246,6 @@ def start_buy_goods(realm: Realm, post_data):
     except Exception as e:
         print(f"Error during instant buy_goods action: {e}")
         return False, f"An unexpected error occurred: {e}", None
-
-def calculate_construct_stronghold_cost(realm, stronghold_type_id):
-    """
-    Calculates the cost for the Construct Stronghold action.
-    This is the SINGLE SOURCE OF TRUTH for this action's cost.
-    """
-    try:
-        stronghold_type = StrongholdType.objects.get(id=stronghold_type_id)
-        costs = {
-            'population': stronghold_type.population_cost,
-            'gold': stronghold_type.gold_cost,
-            **stronghold_type.resource_costs  # Unpacks the JSON field into the dict
-        }
-        return costs
-    except StrongholdType.DoesNotExist:
-        return {} # Return empty dict if the type is invalid
     
 def start_construct_stronghold(realm: Realm, post_data):
     """
@@ -272,22 +256,16 @@ def start_construct_stronghold(realm: Realm, post_data):
     land_unit_id = post_data.get('land_unit')
     assigned_pop_ids = post_data.getlist('assigned_population')
     stronghold_name = post_data.get('stronghold_name', '')
-    land_unit = LandUnit.objects.get(id=land_unit_id, realm=realm)
-    stronghold_type = StrongholdType.objects.get(id=stronghold_type_id)
 
     if not all([stronghold_type_id, land_unit_id, assigned_pop_ids]):
         return False, "You must select a type, location, and assign population units.", None
 
     try:
-        # --- 1. Get Authoritative Cost ---
-        # Call the single source of truth to get the definitive cost.
-        costs = calculate_construct_stronghold_cost(realm, stronghold_type_id)
-        if not costs:
-             return False, "Invalid stronghold type selected.", None
-        
-        required_pop = costs.get("population", 0)
-        gold_cost = costs.get("gold", 0)
+        stronghold_type = StrongholdType.objects.get(id=stronghold_type_id)
+        land_unit = LandUnit.objects.get(id=land_unit_id, realm=realm)
 
+        # --- 1. Validate Population Selection ---
+        required_pop = stronghold_type.population_cost
         if len(assigned_pop_ids) != required_pop:
             return False, f"Incorrect number of population units assigned. This construction requires {required_pop}.", None
 
@@ -304,13 +282,12 @@ def start_construct_stronghold(realm: Realm, post_data):
 
         
         # --- 1. Check Prerequisites ---
-        if realm.treasury < gold_cost:
-            return False, f"Not enough gold. Requires {gold_cost}.", None
+        if realm.treasury < stronghold_type.gold_cost:
+            return False, f"Not enough gold. Requires {stronghold_type.gold_cost}.", None
         
-        for resource, cost in costs.items():
-            if resource not in ['population', 'gold']:
-                if realm.get_resource_quantity(resource) < cost:
-                    return False, f"Not enough {resource}. Requires {cost}.", None
+        for resource, cost in stronghold_type.resource_costs.items():
+            if realm.get_resource_quantity(resource) < cost:
+                return False, f"Not enough {resource}. Requires {cost}.", None
             
         # --- 2 DYNAMIC DURATION LOGIC ---
         # 1. Get the base duration from the selected StrongholdType
@@ -328,10 +305,9 @@ def start_construct_stronghold(realm: Realm, post_data):
         
         # --- 2. Pay Costs ---
         with transaction.atomic():
-            realm.treasury -= gold_cost
-            for resource, cost in costs.items():
-                if resource not in ['population', 'gold']:
-                    realm.update_resource_quantity(resource, -cost)
+            realm.treasury -= stronghold_type.gold_cost
+            for resource, cost in stronghold_type.resource_costs.items():
+                realm.update_resource_quantity(resource, -cost)
 
             units_to_assign.update(status='busy')
             realm.save()
@@ -343,7 +319,7 @@ def start_construct_stronghold(realm: Realm, post_data):
             'stronghold_type_id': stronghold_type.id,
             'land_unit_id': int(land_unit_id),
             'assigned_pop_ids': [int(pid) for pid in assigned_pop_ids],
-            'final_duration': duration, # Pass the correct duration
+            'final_duration': stronghold_type.duration_seasons, # Pass the correct duration
             'stronghold_name': stronghold_name # <-- Pass the name along
         }
         
@@ -408,12 +384,11 @@ def start_build_roads(realm: Realm, post_data):
     if land_units.count() != len(selected_land_ids):
         return False, "One or more selected land units are invalid or already have roads.", None
     
-    # Call the single source of truth to get the authoritative cost
-    costs = calculate_build_roads_cost(realm, selected_land_ids)
-
-    required_pop = costs.get("population", 0)
-    wood_cost = costs.get("Wood", 0)
-    stone_cost = costs.get("Stone", 0)
+    # Recalculate dynamic pop cost to validate against
+    required_pop = 1
+    for unit in land_units:
+        if not hasattr(unit, 'stronghold') or not unit.stronghold:
+            required_pop += 1
 
     # Validate the user's selection
     if len(assigned_pop_ids) != required_pop:
@@ -424,8 +399,8 @@ def start_build_roads(realm: Realm, post_data):
         return False, "Invalid or busy population units were selected.", None
     
     # Check resource costs
-    # wood_cost = 2 + (len(land_units) - land_units.filter(stronghold__isnull=False).count())
-    # stone_cost = 1
+    wood_cost = 2 + (len(land_units) - land_units.filter(stronghold__isnull=False).count())
+    stone_cost = 1
     if realm.get_resource_quantity("Wood") < wood_cost or realm.get_resource_quantity("Stone") < stone_cost:
         return False, "Not enough resources.", None
 
@@ -448,15 +423,6 @@ def finish_build_roads(realm: Realm, action_data: dict, completed_action: Ongoin
     completed_action.assigned_population.all().update(status='idle')
     print(f"Finished building roads for realm {realm.name}.")
 
-def calculate_build_mine_cost():
-    """
-    Calculates the cost for the Build Mine action.
-    This is the SINGLE SOURCE OF TRUTH for this action's cost.
-    """    
-    costs = {"population": 1, "Stone": 4, "Wood": 3, "Gold": 3}
-            
-    return costs
-
 
 def start_build_mine(realm: Realm, post_data):
     land_unit_id = post_data.get('land_unit_for_mine')
@@ -470,11 +436,10 @@ def start_build_mine(realm: Realm, post_data):
         return False, "Invalid land unit selected.", None
 
     # Costs
-    costs = calculate_build_mine_cost()
-    stone_cost, gold_cost, wood_cost = costs.get("Stone", 0), costs.get("Gold", 0), costs.get("Wood", 0)
+    stone_cost, gold_cost, wood_cost = 4, 3, 3
 
     # Check population and resources
-    required_pop = costs.get("population", 0)
+    required_pop = 1 # Static cost for mines
     if len(assigned_pop_ids) != required_pop:
         return False, "You must assign exactly one population unit to build a mine.", None
 

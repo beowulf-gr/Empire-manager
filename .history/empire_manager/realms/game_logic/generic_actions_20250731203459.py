@@ -343,7 +343,7 @@ def start_construct_stronghold(realm: Realm, post_data):
             'stronghold_type_id': stronghold_type.id,
             'land_unit_id': int(land_unit_id),
             'assigned_pop_ids': [int(pid) for pid in assigned_pop_ids],
-            'final_duration': duration, # Pass the correct duration
+            'final_duration': stronghold_type.duration_seasons, # Pass the correct duration
             'stronghold_name': stronghold_name # <-- Pass the name along
         }
         

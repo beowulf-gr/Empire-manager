@@ -273,7 +273,6 @@ def start_construct_stronghold(realm: Realm, post_data):
     assigned_pop_ids = post_data.getlist('assigned_population')
     stronghold_name = post_data.get('stronghold_name', '')
     land_unit = LandUnit.objects.get(id=land_unit_id, realm=realm)
-    stronghold_type = StrongholdType.objects.get(id=stronghold_type_id)
 
     if not all([stronghold_type_id, land_unit_id, assigned_pop_ids]):
         return False, "You must select a type, location, and assign population units.", None
@@ -308,9 +307,8 @@ def start_construct_stronghold(realm: Realm, post_data):
             return False, f"Not enough gold. Requires {gold_cost}.", None
         
         for resource, cost in costs.items():
-            if resource not in ['population', 'gold']:
-                if realm.get_resource_quantity(resource) < cost:
-                    return False, f"Not enough {resource}. Requires {cost}.", None
+            if realm.get_resource_quantity(resource) < cost:
+                return False, f"Not enough {resource}. Requires {cost}.", None
             
         # --- 2 DYNAMIC DURATION LOGIC ---
         # 1. Get the base duration from the selected StrongholdType
@@ -328,10 +326,9 @@ def start_construct_stronghold(realm: Realm, post_data):
         
         # --- 2. Pay Costs ---
         with transaction.atomic():
-            realm.treasury -= gold_cost
-            for resource, cost in costs.items():
-                if resource not in ['population', 'gold']:
-                    realm.update_resource_quantity(resource, -cost)
+            realm.treasury -= stronghold_type.gold_cost
+            for resource, cost in stronghold_type.resource_costs.items():
+                realm.update_resource_quantity(resource, -cost)
 
             units_to_assign.update(status='busy')
             realm.save()
@@ -343,7 +340,7 @@ def start_construct_stronghold(realm: Realm, post_data):
             'stronghold_type_id': stronghold_type.id,
             'land_unit_id': int(land_unit_id),
             'assigned_pop_ids': [int(pid) for pid in assigned_pop_ids],
-            'final_duration': duration, # Pass the correct duration
+            'final_duration': stronghold_type.duration_seasons, # Pass the correct duration
             'stronghold_name': stronghold_name # <-- Pass the name along
         }
         
