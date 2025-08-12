@@ -303,16 +303,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const upgradeSelect = document.getElementById('upgrade_type');
                     const popContainer = document.getElementById('population-dropdown-container');
 
-                    await fetchSelectOptions(gameData.existingStrongholdsUrl, strongholdSelect); // Assumes you add this URL to the game-data div
+                    await fetchSelectOptions(`{% url 'get_existing_strongholds_json' realm_name=realm.name %}`, strongholdSelect);
 
                     strongholdSelect.addEventListener('change', async function() {
                         const strongholdId = this.value;
-                        upgradeContainer.style.display = 'none';
+                        upgradeContainer.style.display = 'block';
                         popContainer.innerHTML = '';
                         displayCostPreview({});
                         if (!strongholdId) return;
 
-                        await fetchSelectOptions(`/realm/get_available_upgrades_json/${strongholdId}/`, upgradeSelect);
+                        await fetchSelectOptions(gameData.strongholdUpgradesUrl, upgradeSelect);
                         upgradeContainer.style.display = 'block';
                     });
 

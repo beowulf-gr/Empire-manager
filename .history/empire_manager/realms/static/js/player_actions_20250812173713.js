@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     strongholdSelect.addEventListener('change', async function() {
                         const strongholdId = this.value;
-                        upgradeContainer.style.display = 'none';
+                        upgradeContainer.style.display = 'block';
                         popContainer.innerHTML = '';
                         displayCostPreview({});
                         if (!strongholdId) return;

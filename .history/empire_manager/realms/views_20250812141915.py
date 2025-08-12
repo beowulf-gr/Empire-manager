@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Realm, LandUnit, PopulationUnit, LandUnitType, MINERAL_SUBTYPES, RealmScale, OngoingAction, GoodsType, Resource, RealmResource, RealmGoodsType, ActionType, StrongholdType, StrongholdInstance, StrongholdImprovementType, StrongholdImprovementInstance
+from .models import Realm, LandUnit, PopulationUnit, LandUnitType, MINERAL_SUBTYPES, RealmScale, OngoingAction, GoodsType, Resource, RealmResource, RealmGoodsType, ActionType, StrongholdType, StrongholdInstance 
 from django.http import HttpResponse, Http404, JsonResponse
 from django.contrib import messages
 from .forms import RealmInfoForm, TreasuryForm, LandUnitForm, PopulationUnitForm, PopulationRace
@@ -1368,43 +1368,3 @@ def get_production_strongholds_json(request, realm_name):
     ]
     
     return JsonResponse(data, safe=False)
-
-def get_existing_strongholds_json(request, realm_name):
-    """Returns a list of all strongholds in a given realm."""
-    realm = get_object_or_404(Realm, name=realm_name)
-    strongholds = StrongholdInstance.objects.filter(realm=realm)
-    data = [{'id': sh.id, 'name': f"{sh.name} ({sh.land_unit.name})"} for sh in strongholds]
-    return JsonResponse(data, safe=False)
-
-def get_available_upgrades_json(request, stronghold_instance_id):
-    """
-    Returns a list of improvements that can be built in a specific stronghold.
-    It filters based on the stronghold's type and excludes improvements already built.
-    """
-    stronghold = get_object_or_404(StrongholdInstance, id=stronghold_instance_id)
-    
-    # Get IDs of improvements already built in this stronghold
-    existing_improvement_ids = stronghold.improvements.values_list('improvement_type_id', flat=True)
-    
-    # Find all possible upgrades that are compatible with this stronghold's type
-    # and are not already built
-    available_upgrades = StrongholdImprovementType.objects.filter(
-        prerequisite_stronghold_types=stronghold.stronghold_type
-    ).exclude(
-        id__in=existing_improvement_ids
-    ).values('id', 'name')
-    
-    return JsonResponse(list(available_upgrades), safe=False)
-
-def get_upgrade_details_json(request, upgrade_type_id):
-    """Returns the specific costs and duration for a selected upgrade."""
-    upgrade = get_object_or_404(StrongholdImprovementType, id=upgrade_type_id)
-    data = {
-        'id': upgrade.id,
-        'name': upgrade.name,
-        'population_cost': upgrade.population_cost,
-        'gold_cost': upgrade.gold_cost,
-        'resource_costs': upgrade.resource_costs,
-        'duration': upgrade.duration_seasons
-    }
-    return JsonResponse(data)

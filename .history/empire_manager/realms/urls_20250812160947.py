@@ -30,8 +30,6 @@ urlpatterns = [
     path('<str:realm_name>/end_turn/', views.end_turn, name='end_turn'),
     path('<str:realm_name>/start_action/', views.start_action, name='start_action'),
     # Other existing URLs for realm detail and creation of land and population units
-    path('get_available_upgrades_json/<int:stronghold_instance_id>/', views.get_available_upgrades_json, name='get_available_upgrades_json'),
-    path('get_upgrade_details_json/<int:upgrade_type_id>/', views.get_upgrade_details_json, name='get_upgrade_details_json'),
     path('realm_scales_json/', views.get_realm_scales_json, name='get_realm_scales_json'),
     path('get_population_races_json/', views.get_population_races_json, name='get_population_races_json'),
     path('get_goods_types_json/', views.get_goods_types_json, name='get_goods_types_json'),
@@ -43,6 +41,8 @@ urlpatterns = [
     path('<str:realm_name>/get_road_eligible_land_units_json/', views.get_road_eligible_land_units_json, name='get_road_eligible_land_units_json'),
     path('<str:realm_name>/get_mine_eligible_land_units_json/', views.get_mine_eligible_land_units_json, name='get_mine_eligible_land_units_json'),
     path('<str:realm_name>/get_existing_strongholds_json/', views.get_existing_strongholds_json, name='get_existing_strongholds_json'),
+    path('get_available_upgrades_json/<int:stronghold_instance_id>/', views.get_available_upgrades_json, name='get_available_upgrades_json'),
+    path('get_upgrade_details_json/<int:upgrade_type_id>/', views.get_upgrade_details_json, name='get_upgrade_details_json'),
     path('<str:realm_name>/get_production_strongholds_json/', views.get_production_strongholds_json, name='get_production_strongholds_json'),
     path('<str:realm_name>/preview_action_cost/', views.preview_action_cost, name='preview_action_cost'),
     path('<str:name>/', views.realm_detail, name='realm_detail'),

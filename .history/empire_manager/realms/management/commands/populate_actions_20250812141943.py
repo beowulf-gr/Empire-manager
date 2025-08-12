@@ -36,7 +36,7 @@ class Command(BaseCommand):
                 "action_key": "construct_stronghold", "name": "Construct Stronghold",
                 "description": "Build a new stronghold on an available land unit. Costs and duration vary by the type of stronghold selected.", "duration": 1,
                 "submit_text": "Start Construction",
-                "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Fall"],
+                "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Autumn"],
                 "seasonal_modifications": {
                     "Fall": {"duration_add": 2}, 
                     "Summer": {"duration_add": 1}
@@ -59,7 +59,7 @@ class Command(BaseCommand):
             {
                 "action_key": "build_roads", "name": "Build Roads",
                 "description": "Connect up to 4 land areas with roads. Costs increase for areas without a stronghold.", "duration": 2,
-                "submit_text": "Build Roads", "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Fall"],
+                "submit_text": "Build Roads", "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Autumn"],
                 "seasonal_modifications": {
                     "Fall": {"duration_add": 2}, 
                     "Summer": {"duration_add": 1}
@@ -74,7 +74,7 @@ class Command(BaseCommand):
             {
                 "action_key": "build_mine", "name": "Build Mine",
                 "description": "Construct a mine on a mineral or stone-producing land unit to increase its output.", "duration": 2,
-                "submit_text": "Build Mine", "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Fall"],
+                "submit_text": "Build Mine", "descriptors": ["Construction"], "seasons": ["Spring", "Summer", "Autumn"],
                 "seasonal_modifications": {
                     "Fall": {"duration_add": 2}, 
                     "Summer": {"duration_add": 1}
@@ -95,24 +95,6 @@ class Command(BaseCommand):
                         "name": "stronghold_name", "label": "Stronghold Name (Optional):", "type": "text",
                         "required": True, "options_url": "/realm/placeholder/get_production_strongholds_json/"
                     }
-                ]
-            },
-            {
-                "action_key": "upgrade_stronghold", "name": "Upgrade Stronghold",
-                "description": "Construct a new improvement like a Marketplace or Walls in an existing stronghold.",
-                "duration": 1, # This will be dynamic based on the chosen upgrade
-                "submit_text": "Begin Upgrade",
-                "descriptors": ["Construction"], "seasons": [],
-                "inputs": [
-                    {
-                        "name": "stronghold_to_upgrade",
-                        "label": "Select Stronghold to Upgrade:",
-                        "type": "select",
-                        "required": True,
-                        "options_url": "/realm/placeholder/get_existing_strongholds_json/"
-                    }
-                    # // The rest of the form (upgrade type, population) will be added
-                    # // dynamically with JavaScript.
                 ]
             }
         ]

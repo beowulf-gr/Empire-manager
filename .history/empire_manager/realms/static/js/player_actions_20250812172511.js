@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mineEligibleUrl = gameData.mineEligibleUrl;
     const resourceTypesUrl = gameData.resourceTypesUrl; // Assuming you add this to the data hub
     const goodsTypesUrl = gameData.goodsTypesUrl;     // Assuming you add this to the data hub
+    const existingStrongholdsUrl = gameData.existingStrongholdsUrl; // Assuming you add this to the data hub
 
     // --- 2. Global DOM Element References ---
     const actionButtons = document.querySelectorAll('.action-button');
@@ -303,16 +304,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const upgradeSelect = document.getElementById('upgrade_type');
                     const popContainer = document.getElementById('population-dropdown-container');
 
-                    await fetchSelectOptions(gameData.existingStrongholdsUrl, strongholdSelect); // Assumes you add this URL to the game-data div
+                    await fetchSelectOptions(existingStrongholdsUrl, strongholdSelect); // Assumes you add this URL to the game-data div
 
                     strongholdSelect.addEventListener('change', async function() {
                         const strongholdId = this.value;
-                        upgradeContainer.style.display = 'none';
+                        upgradeContainer.style.display = 'block';
                         popContainer.innerHTML = '';
                         displayCostPreview({});
                         if (!strongholdId) return;
 
-                        await fetchSelectOptions(`/realm/get_available_upgrades_json/${strongholdId}/`, upgradeSelect);
+                        await fetchSelectOptions(gameData.strongholdUpgradesUrl, upgradeSelect);
                         upgradeContainer.style.display = 'block';
                     });
 

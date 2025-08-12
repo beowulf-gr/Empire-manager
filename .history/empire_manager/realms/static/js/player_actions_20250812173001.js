@@ -307,12 +307,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     strongholdSelect.addEventListener('change', async function() {
                         const strongholdId = this.value;
-                        upgradeContainer.style.display = 'none';
+                        upgradeContainer.style.display = 'block';
                         popContainer.innerHTML = '';
                         displayCostPreview({});
                         if (!strongholdId) return;
 
-                        await fetchSelectOptions(`/realm/get_available_upgrades_json/${strongholdId}/`, upgradeSelect);
+                        await fetchSelectOptions(gameData.strongholdUpgradesUrl, upgradeSelect);
                         upgradeContainer.style.display = 'block';
                     });
 

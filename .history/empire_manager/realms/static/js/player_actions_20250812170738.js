@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const idlePopRes = await fetch(idlePopUrl);
             allIdlePopulation = await idlePopRes.json();
 
-            if (actionKey === 'construct_stronghold' || actionKey === 'build_roads' || actionKey === 'build_mine' || actionKey === 'upgrade_stronghold') {
+            if (actionKey === 'construct_stronghold' || actionKey === 'build_roads' || actionKey === 'build_mine') {
                 dynamicInputsDiv.innerHTML = `
                     <div id="form-inputs-container"></div>
                     <div id="cost-preview-container" style="margin-top: 15px; padding: 10px; border: 1px solid #eee;"></div>`;
@@ -307,12 +307,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     strongholdSelect.addEventListener('change', async function() {
                         const strongholdId = this.value;
-                        upgradeContainer.style.display = 'none';
+                        upgradeContainer.style.display = 'block';
                         popContainer.innerHTML = '';
                         displayCostPreview({});
                         if (!strongholdId) return;
 
-                        await fetchSelectOptions(`/realm/get_available_upgrades_json/${strongholdId}/`, upgradeSelect);
+                        await fetchSelectOptions(gameData.strongholdUpgradesUrl, upgradeSelect);
                         upgradeContainer.style.display = 'block';
                     });
 

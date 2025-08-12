@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const idlePopRes = await fetch(idlePopUrl);
             allIdlePopulation = await idlePopRes.json();
 
-            if (actionKey === 'construct_stronghold' || actionKey === 'build_roads' || actionKey === 'build_mine' || actionKey === 'upgrade_stronghold') {
+            if (actionKey === 'construct_stronghold' || actionKey === 'build_roads' || actionKey === 'build_mine') {
                 dynamicInputsDiv.innerHTML = `
                     <div id="form-inputs-container"></div>
                     <div id="cost-preview-container" style="margin-top: 15px; padding: 10px; border: 1px solid #eee;"></div>`;
@@ -305,44 +305,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     await fetchSelectOptions(gameData.existingStrongholdsUrl, strongholdSelect); // Assumes you add this URL to the game-data div
 
-                    strongholdSelect.addEventListener('change', async function() {
-                        const strongholdId = this.value;
-                        upgradeContainer.style.display = 'none';
-                        popContainer.innerHTML = '';
-                        displayCostPreview({});
-                        if (!strongholdId) return;
+                    dynamicInputsDiv.addEventListener('change', async function(event) {
+                    
+                        // Check if the change came from the stronghold selection dropdown
+                        if (event.target.id === 'stronghold_to_upgrade') {
+                            const strongholdId = event.target.value;
+                            upgradeContainer.style.display = 'none';
+                            popContainer.innerHTML = '';
+                            displayCostPreview({});
+                            if (!strongholdId) return;
 
-                        await fetchSelectOptions(`/realm/get_available_upgrades_json/${strongholdId}/`, upgradeSelect);
-                        upgradeContainer.style.display = 'block';
-                    });
+                            await fetchSelectOptions(`/realm/get_available_upgrades_json/${strongholdId}/`, upgradeSelect);
+                            upgradeContainer.style.display = 'block';
+                        }
 
-                    upgradeSelect.addEventListener('change', async function() {
-                        const upgradeId = this.value;
-                        popContainer.innerHTML = '';
-                        if (!upgradeId) { displayCostPreview({}); return; }
-                        
-                        const detailsRes = await fetch(`/realm/get_upgrade_details_json/${upgradeId}/`);
-                        const details = await detailsRes.json();
-                        
-                        let costs = { ...details.resource_costs, 'Gold': details.gold_cost, 'Population': details.population_cost };
-                        displayCostPreview(costs);
+                        // Check if the change came from the upgrade selection dropdown
+                        if (event.target.id === 'upgrade_type') {
+                            const upgradeId = event.target.value;
+                            popContainer.innerHTML = '';
+                            if (!upgradeId) { displayCostPreview({}); return; }
+                            
+                            const detailsRes = await fetch(`/realm/get_upgrade_details_json/${upgradeId}/`);
+                            const details = await detailsRes.json();
+                            
+                            let costs = { ...details.resource_costs, 'Gold': details.gold_cost, 'Population': details.population_cost };
+                            displayCostPreview(costs);
 
-                        const requiredPop = details.population_cost;
-                        if (allIdlePopulation.length < requiredPop) {   
-                            popContainer.innerHTML = `<p style="color: red;">Not enough idle population!</p>`;
-                            formSubmitButton.disabled = true;
-                        } else {
-                            formSubmitButton.disabled = false;
-                            popContainer.innerHTML = `<p>Assign ${requiredPop} population unit(s):</p>`;
-                            for (let i = 0; i < requiredPop; i++) {
-                                const newSelect = document.createElement('select');
-                                newSelect.name = 'assigned_population'; 
-                                newSelect.className = 'population-select'; 
-                                newSelect.required = true;
-                                newSelect.innerHTML = '<option value="" selected>-- Select a Unit --</option>';
-                                allIdlePopulation.forEach(unit => { newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`; });
-                                popContainer.appendChild(newSelect);
-                                newSelect.addEventListener('change', updatePopulationDropdowns);
+                            const requiredPop = details.population_cost;
+                            if (allIdlePopulation.length < requiredPop) {
+                                popContainer.innerHTML = `<p style="color: red;">Not enough idle population!</p>`;
+                                formSubmitButton.disabled = true;
+                            } else {
+                                formSubmitButton.disabled = false;
+                                popContainer.innerHTML = `<p>Assign ${requiredPop} population unit(s):</p>`;
+                                for (let i = 0; i < requiredPop; i++) {
+                                    const newSelect = document.createElement('select');
+                                    newSelect.name = 'assigned_population';
+                                    newSelect.className = 'population-select';
+                                    newSelect.required = true;
+                                    newSelect.innerHTML = '<option value="" selected>-- Select a Unit --</option>';
+                                    allIdlePopulation.forEach(unit => {
+                                        newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`;
+                                    });
+                                    popContainer.appendChild(newSelect);
+                                    newSelect.addEventListener('change', updatePopulationDropdowns);
+                                }
                             }
                         }
                     });

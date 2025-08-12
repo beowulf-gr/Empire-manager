@@ -1,4 +1,4 @@
-from ..models import Realm, OngoingAction, PopulationRace, PopulationUnit, Resource, RealmResource, GoodsType, RealmGoodsType, ActionType, StrongholdType, StrongholdInstance, LandUnit, StrongholdImprovementInstance, StrongholdImprovementType
+from ..models import Realm, OngoingAction, PopulationRace, PopulationUnit, Resource, RealmResource, GoodsType, RealmGoodsType, ActionType, StrongholdType, StrongholdInstance, LandUnit
 from django.db import transaction
 import random
 from decimal import Decimal, ROUND_FLOOR, ROUND_HALF_UP

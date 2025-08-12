@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const idlePopRes = await fetch(idlePopUrl);
             allIdlePopulation = await idlePopRes.json();
 
-            if (actionKey === 'construct_stronghold' || actionKey === 'build_roads' || actionKey === 'build_mine' || actionKey === 'upgrade_stronghold') {
+            if (actionKey === 'construct_stronghold' || actionKey === 'build_roads' || actionKey === 'build_mine') {
                 dynamicInputsDiv.innerHTML = `
                     <div id="form-inputs-container"></div>
                     <div id="cost-preview-container" style="margin-top: 15px; padding: 10px; border: 1px solid #eee;"></div>`;
@@ -284,11 +284,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         allIdlePopulation.forEach(unit => { newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`; });
                         popContainer.appendChild(newSelect);
                     }
-                } else if (actionKey === "upgrade_stronghold") {
+                } else if (actionKey === 'upgrade_stronghold') {
+                    // 1. Create the complete, static HTML structure for the form
                     dynamicInputsDiv.innerHTML = `
                         <div id="form-inputs-container">
                             <label for="stronghold_to_upgrade">Select Stronghold:</label>
                             <select id="stronghold_to_upgrade" name="stronghold_to_upgrade" required></select><br><br>
+                            
                             <div id="upgrade-choice-container" style="display: none;">
                                 <label for="upgrade_type">Select Improvement:</label>
                                 <select id="upgrade_type" name="upgrade_type" required></select><br><br>
@@ -298,24 +300,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div id="cost-preview-container" style="margin-top: 15px; padding: 10px; border: 1px solid #eee;"></div>
                     `;
                     
+                    // 2. Get references to the elements now that they exist in the DOM
                     const strongholdSelect = document.getElementById('stronghold_to_upgrade');
                     const upgradeContainer = document.getElementById('upgrade-choice-container');
                     const upgradeSelect = document.getElementById('upgrade_type');
                     const popContainer = document.getElementById('population-dropdown-container');
 
-                    await fetchSelectOptions(gameData.existingStrongholdsUrl, strongholdSelect); // Assumes you add this URL to the game-data div
-
+                    // 3. Attach the first event listener
                     strongholdSelect.addEventListener('change', async function() {
                         const strongholdId = this.value;
-                        upgradeContainer.style.display = 'none';
+                        upgradeContainer.style.display = 'none'; // Hide sub-options
                         popContainer.innerHTML = '';
                         displayCostPreview({});
                         if (!strongholdId) return;
 
+                        // Fetch data for the second dropdown
                         await fetchSelectOptions(`/realm/get_available_upgrades_json/${strongholdId}/`, upgradeSelect);
+                        
+                        // Show the second dropdown
                         upgradeContainer.style.display = 'block';
                     });
-
+                    
+                    // 4. Attach the second event listener
                     upgradeSelect.addEventListener('change', async function() {
                         const upgradeId = this.value;
                         popContainer.innerHTML = '';
@@ -327,8 +333,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         let costs = { ...details.resource_costs, 'Gold': details.gold_cost, 'Population': details.population_cost };
                         displayCostPreview(costs);
 
+                        // Build population dropdowns
                         const requiredPop = details.population_cost;
-                        if (allIdlePopulation.length < requiredPop) {   
+                        if (allIdlePopulation.length < requiredPop) {
                             popContainer.innerHTML = `<p style="color: red;">Not enough idle population!</p>`;
                             formSubmitButton.disabled = true;
                         } else {
@@ -336,16 +343,21 @@ document.addEventListener('DOMContentLoaded', () => {
                             popContainer.innerHTML = `<p>Assign ${requiredPop} population unit(s):</p>`;
                             for (let i = 0; i < requiredPop; i++) {
                                 const newSelect = document.createElement('select');
-                                newSelect.name = 'assigned_population'; 
-                                newSelect.className = 'population-select'; 
+                                newSelect.name = 'assigned_population';
+                                newSelect.className = 'population-select';
                                 newSelect.required = true;
                                 newSelect.innerHTML = '<option value="" selected>-- Select a Unit --</option>';
-                                allIdlePopulation.forEach(unit => { newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`; });
+                                allIdlePopulation.forEach(unit => {
+                                    newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`;
+                                });
                                 popContainer.appendChild(newSelect);
                                 newSelect.addEventListener('change', updatePopulationDropdowns);
                             }
                         }
                     });
+
+                    // 5. Populate the very first dropdown to kick things off
+                    await fetchSelectOptions(gameData.existingStrongholdsUrl, strongholdSelect);
                 }
                 
             } else if (actionKey === "buy_resources" || actionKey === "buy_goods") {
