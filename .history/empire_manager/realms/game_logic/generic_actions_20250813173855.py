@@ -580,31 +580,6 @@ def finish_upgrade_stronghold(realm: Realm, action_data: dict, completed_action:
     except (StrongholdInstance.DoesNotExist, StrongholdImprovementType.DoesNotExist):
         print(f"ERROR: Could not finish upgrade for realm '{realm.name}'.")
 
-def calculate_produce_goods_cost(realm, good_type_id, resource_id=None):
-    """Calculates the dynamic cost for the Produce Goods action."""
-    try:
-        good_type = GoodsType.objects.get(id=good_type_id)
-        costs = {'population': 1} # Base population cost
-        is_overpaying = False # Default to false
-
-        resource_to_use = None
-        if good_type.required_resource_specific:
-            resource_to_use = good_type.required_resource_specific
-        elif resource_id:
-            resource_to_use = Resource.objects.get(id=resource_id)
-
-        if resource_to_use:
-            if resource_to_use.value <= 0: return {} # Avoid division by zero
-            calculated_quantity = int(Decimal(good_type.cost_in_gold) / resource_to_use.value)
-            quantity_needed = max(1, calculated_quantity)
-            if calculated_quantity < 1:
-                is_overpaying = True
-            costs[resource_to_use.name] = quantity_needed
-        
-        return {'costs': costs, 'is_overpaying': is_overpaying}
-    except (GoodsType.DoesNotExist, Resource.DoesNotExist):
-        return {}
-    
 def start_produce_goods(realm: Realm, post_data):
     """
     Starts the production of a trade good, validating all costs and assignments.

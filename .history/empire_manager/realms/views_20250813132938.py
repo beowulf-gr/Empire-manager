@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 import random
 from .game_logic import generic_actions, summer_actions
-from .game_logic.generic_actions import calculate_build_roads_cost, calculate_build_mine_cost, calculate_construct_stronghold_cost, calculate_produce_goods_cost
+from .game_logic.generic_actions import calculate_build_roads_cost, calculate_build_mine_cost, calculate_construct_stronghold_cost
 #from .game_logic.action_definitions import SEASONAL_ACTIONS, ALL_GAME_ACTIONS, ACTION_HANDLERS
 from .game_logic.action_definitions import ACTION_HANDLERS
 from django.core.serializers import serialize
@@ -1340,12 +1340,6 @@ def preview_action_cost(request, realm_name):
             stronghold_type_id = data.get('stronghold_type_id')
             if stronghold_type_id:
                 costs = calculate_construct_stronghold_cost(realm, stronghold_type_id)
-        elif action_key == 'produce_goods':
-            good_type_id = data.get('good_type_id')
-            resource_id = data.get('resource_id') # This may be null
-            if good_type_id:
-                costs = calculate_produce_goods_cost(realm, good_type_id, resource_id)
-    
             
         # Add 'else if' blocks here for other actions with dynamic costs
             
@@ -1435,29 +1429,3 @@ def get_upgrade_details_json(request, upgrade_type_id):
         'duration': upgrade.duration_seasons
     }
     return JsonResponse(data)
-
-def get_good_details_json(request, good_type_id):
-    """Returns the cost and resource requirements for a specific good."""
-    good = get_object_or_404(GoodsType, id=good_type_id)
-    data = {
-        'id': good.id,
-        'name': good.name,
-        'cost_in_gold': good.cost_in_gold,
-        'required_resource_category': good.required_resource_category,
-        'required_resource_specific': good.required_resource_specific_id # Pass the ID
-    }
-    return JsonResponse(data)
-
-def get_resources_by_category_json(request, realm_name, category_name):
-    """
-    Returns a list of resources a realm possesses that match a specific category.
-    """
-    realm = get_object_or_404(Realm, name=realm_name)
-    
-    # Find all resources the realm has with a quantity > 0 that match the category
-    available_resources = realm.resources.filter(
-        category=category_name,
-        realmresource__quantity__gt=0
-    ).values('id', 'name')
-    
-    return JsonResponse(list(available_resources), safe=False)

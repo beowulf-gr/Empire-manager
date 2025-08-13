@@ -1340,12 +1340,6 @@ def preview_action_cost(request, realm_name):
             stronghold_type_id = data.get('stronghold_type_id')
             if stronghold_type_id:
                 costs = calculate_construct_stronghold_cost(realm, stronghold_type_id)
-        elif action_key == 'produce_goods':
-            good_type_id = data.get('good_type_id')
-            resource_id = data.get('resource_id') # This may be null
-            if good_type_id:
-                costs = calculate_produce_goods_cost(realm, good_type_id, resource_id)
-    
             
         # Add 'else if' blocks here for other actions with dynamic costs
             

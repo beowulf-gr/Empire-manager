@@ -27,4 +27,19 @@ class Command(BaseCommand):
                     "category": resource.get("category", "")
                 }
             )
-            self.stdout.write(self.style.SUCCESS(f"Created/Updated Resource: {resource['name']}"))
+            self.stdout.write(self.style.SUCCESS(f"Created/Updated GoodsType: {good_data['name']}"))
+
+        for resource in resources:
+            # Check if the Resource already exists to avoid duplication
+            resource_obj, created = Resource.objects.get_or_create(
+                name=resource["name"],
+                defaults={"value": resource["value"]}
+            )
+
+            if created:
+                self.stdout.write(self.style.SUCCESS(f"Created Resource: {resource_obj.name}"))
+            else:
+                self.stdout.write(self.style.WARNING(f"Resource {resource_obj.name} already exists"))
+                resource_obj.value = resource["value"]
+                resource_obj.gold_cost_display = resource["display"]
+                resource_obj.save()

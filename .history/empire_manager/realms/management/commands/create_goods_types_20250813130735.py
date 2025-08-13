@@ -58,8 +58,7 @@ class Command(BaseCommand):
                     "value": good_data["value"],
                     "duration": good_data["duration"],
                     "cost_in_gold": good_data["cost_in_gold"],
-                    "required_resource_category": good_data.get("required_resource_category"),
-                    "required_resource_specific": good_data.get("required_resource_specific")
+                    "required_resource_category": good_data.get("required_resource_category")
                 }
             )
             self.stdout.write(self.style.SUCCESS(f"Created/Updated GoodsType: {good_data['name']}"))

@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         <div id="resource-choice-container" style="display: none;">
                             <label for="resource_to_use">3. Select Resource to Use:</label>
-                            <select id="resource_to_use" name="resource_to_use"></select><br><br>
+                            <select id="resource_to_use" name="resource_to_use" required></select><br><br>
                         </div>
 
                         <div id="population-dropdown-container"></div>
@@ -415,81 +415,59 @@ document.addEventListener('DOMContentLoaded', () => {
                 const resourceSelect = document.getElementById('resource_to_use');
                 const popContainer = document.getElementById('population-dropdown-container');
 
-                // 1. Populate the first dropdown
+                // 1. Populate the first dropdown with all possible goods
                 await fetchSelectOptions(gameData.allProducibleGoodsUrl, goodSelect);
 
-                // 2. Listener for when a GOOD is chosen
+                // 2. This listener runs when a good is chosen
                 goodSelect.addEventListener('change', async function() {
                     const goodId = this.value;
-                    // Hide all subsequent sections
                     strongholdContainer.style.display = 'none';
                     resourceContainer.style.display = 'none';
                     popContainer.innerHTML = '';
                     displayCostPreview({});
                     if (!goodId) return;
 
-                    // Fetch and show the stronghold dropdown
+                    // Fetch the strongholds that can produce this specific good
                     await fetchSelectOptions(`/realm/${realmName}/get_strongholds_for_good_json/${goodId}/`, strongholdSelect);
                     strongholdContainer.style.display = 'block';
                 });
 
-                // 3. Listener for when a STRONGHOLD is chosen
+                // 3. This listener runs when a stronghold is chosen
                 strongholdSelect.addEventListener('change', async function() {
                     const goodId = goodSelect.value;
                     const strongholdId = this.value;
                     
-                    // Hide lower sections
                     resourceContainer.style.display = 'none';
                     popContainer.innerHTML = '';
-                    if (!goodId || !strongholdId) { displayCostPreview({}); return; }
+
+                    if (!goodId || !strongholdId) {
+                         displayCostPreview({});
+                         return;
+                    }
 
                     const detailsRes = await fetch(`/realm/get_good_details_json/${goodId}/`);
                     const details = await detailsRes.json();
                     
-                    // Show or hide the resource dropdown based on requirements
+                    let requiredPop = 1; // Default population cost, can be updated
+                    let costs = { 'Gold': details.cost_in_gold };
+
+                    // Logic to handle resource selection
                     if (details.required_resource_category) {
-                        resourceSelect.required = true;
                         await fetchSelectOptions(`/realm/${realmName}/get_resources_by_category_json/${details.required_resource_category}/`, resourceSelect);
                         resourceContainer.style.display = 'block';
-                    } else {
-                        resourceSelect.required = false;
+                        // Further cost calculation will happen when a resource is selected
+                    } else if (details.required_resource_specific) {
+                        // The good requires a specific resource, no need for a dropdown
+                        // We would fetch this resource's details to calculate cost
                         resourceContainer.style.display = 'none';
                     }
                     
-                    // Now, trigger a change on the resource select to update the final preview
-                    // This ensures the cost and population show up even if no resource choice is needed
-                    resourceSelect.dispatchEvent(new Event('change'));
-                });
-                
-                // 4. Listener for when a RESOURCE is chosen (or for final calculation)
-                resourceSelect.addEventListener('change', async function() {
-                    const goodId = goodSelect.value;
-                    const resourceId = this.value;
-
-                    // Fetch final costs from the backend
-                    const response = await fetch(previewUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                        body: JSON.stringify({ action_key: 'produce_goods', good_type_id: goodId, resource_id: resourceId })
-                    });
-                    const data = await response.json(); // <-- Get the whole data object
-                    const costs = data.costs || {};
-                    const isOverpaying = data.is_overpaying || false;
-
+                    // For now, let's assume a static population cost of 1 for simplicity
+                    // This can be expanded to fetch from the specific improvement later
+                    costs['Population'] = requiredPop;
                     displayCostPreview(costs);
 
-                    // Display a warning if the player is overpaying
-                    const previewContainer = document.getElementById('cost-preview-container');
-                    if (isOverpaying) {
-                        const warning = document.createElement('p');
-                        warning.style.color = 'orange';
-                        warning.style.fontWeight = 'bold';
-                        warning.textContent = 'Warning: Using this valuable resource will result in some waste.';
-                        previewContainer.appendChild(warning);
-                    }
-
-                    // Build population dropdowns
-                    const requiredPop = costs.population || 0;
+                    // Build the population dropdowns
                     if (allIdlePopulation.length < requiredPop) {
                         popContainer.innerHTML = `<p style="color: red;">Not enough idle population!</p>`;
                         formSubmitButton.disabled = true;
@@ -498,13 +476,33 @@ document.addEventListener('DOMContentLoaded', () => {
                         popContainer.innerHTML = `<p>Assign ${requiredPop} population unit(s):</p>`;
                         for (let i = 0; i < requiredPop; i++) {
                             const newSelect = document.createElement('select');
-                            newSelect.name = 'assigned_population'; newSelect.className = 'population-select'; newSelect.required = true;
+                            newSelect.name = 'assigned_population';
+                            newSelect.className = 'population-select';
+                            newSelect.required = true;
                             newSelect.innerHTML = '<option value="" selected>-- Select a Unit --</option>';
-                            allIdlePopulation.forEach(unit => { newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`; });
+                            allIdlePopulation.forEach(unit => {
+                                newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`;
+                            });
                             popContainer.appendChild(newSelect);
                             newSelect.addEventListener('change', updatePopulationDropdowns);
                         }
                     }
+                });
+
+                // We can add a final listener to the resourceSelect if needed to update costs
+                resourceSelect.addEventListener('change', async function() {
+                    const goodId = goodSelect.value;
+                    const resourceId = this.value;
+                    if(!goodId || !resourceId) return;
+                    
+                    const detailsRes = await fetch(`/realm/get_good_details_json/${goodId}/`);
+                    const details = await detailsRes.json();
+                    
+                    // Here you would calculate the quantity of the selected resource needed
+                    // based on its value and details.cost_in_gold
+                    // For now, we'll just display the gold cost.
+                    let costs = { 'Gold': details.cost_in_gold, 'Population': 1 };
+                    displayCostPreview(costs);
                 });
             } else {
                 // Generic handler for actions like "Recruit Population"

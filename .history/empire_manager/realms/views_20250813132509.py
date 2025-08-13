@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 import random
 from .game_logic import generic_actions, summer_actions
-from .game_logic.generic_actions import calculate_build_roads_cost, calculate_build_mine_cost, calculate_construct_stronghold_cost, calculate_produce_goods_cost
+from .game_logic.generic_actions import calculate_build_roads_cost, calculate_build_mine_cost, calculate_construct_stronghold_cost
 #from .game_logic.action_definitions import SEASONAL_ACTIONS, ALL_GAME_ACTIONS, ACTION_HANDLERS
 from .game_logic.action_definitions import ACTION_HANDLERS
 from django.core.serializers import serialize
@@ -1340,60 +1340,53 @@ def preview_action_cost(request, realm_name):
             stronghold_type_id = data.get('stronghold_type_id')
             if stronghold_type_id:
                 costs = calculate_construct_stronghold_cost(realm, stronghold_type_id)
-        elif action_key == 'produce_goods':
-            good_type_id = data.get('good_type_id')
-            resource_id = data.get('resource_id') # This may be null
-            if good_type_id:
-                costs = calculate_produce_goods_cost(realm, good_type_id, resource_id)
-    
             
         # Add 'else if' blocks here for other actions with dynamic costs
             
         return JsonResponse(costs)
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-def get_all_producible_goods_json(request, realm_name):
+def get_production_strongholds_json(request, realm_name):
     """
-    Returns a list of all unique GoodsTypes the realm can potentially produce
-    based on the improvements it has somewhere.
+    Returns a list of strongholds that have at least one improvement,
+    making them eligible for production actions.
     """
     realm = get_object_or_404(Realm, name=realm_name)
-    producible_goods = GoodsType.objects.none()
-
-    # Check if the realm has any improvement that allows production
-    if realm.strongholds.filter(improvements__improvement_type__name="Craftsmen's Guild").exists():
-        producible_goods = producible_goods | GoodsType.objects.filter(
-            name__in=["Exotic Goods", "Weapons and Armor", "Wooden Goods"]
-        )
     
-    if realm.strongholds.filter(improvements__improvement_type__name="Wizard's Academy").exists():
+    # Find strongholds in this realm that have one or more improvements
+    production_strongholds = StrongholdInstance.objects.annotate(
+        num_improvements=Count('improvements')
+    ).filter(
+        realm=realm,
+        num_improvements__gt=0
+    )
+    
+    # Format the data for the dropdown
+    data = [
+        {'id': sh.id, 'name': f"{sh.name} ({sh.land_unit.name})"} 
+        for sh in production_strongholds
+    ]
+    
+    return JsonResponse(data, safe=False)
+
+def get_producible_goods_json(request, stronghold_instance_id):
+    """
+    Returns a list of GoodsTypes that can be produced at a given stronghold.
+    This logic can be expanded later with specific game rules.
+    """
+    stronghold = get_object_or_404(StrongholdInstance, id=stronghold_instance_id)
+    
+    # This is where your game rules go.
+    producible_goods = GoodsType.objects.none() # Start with an empty queryset
+    
+    if stronghold.improvements.filter(improvement_type__name="Craftsmen's Guild").exists():
+        # This stronghold can produce non-magical items
+        producible_goods = GoodsType.objects.filter(name__in=["Exotic Goods", "Weapons and Armor", "Wooden Goods"])
+
+    if stronghold.improvements.filter(improvement_type__name="Wizard's Academy").exists():
         producible_goods = producible_goods | GoodsType.objects.filter(name="Magic Items")
         
-    return JsonResponse(list(producible_goods.values('id', 'name').distinct()), safe=False)
-
-
-def get_strongholds_for_good_json(request, realm_name, good_type_id):
-    """
-    Returns a list of strongholds in the realm that can produce a SPECIFIC good.
-    """
-    realm = get_object_or_404(Realm, name=realm_name)
-    good_type = get_object_or_404(GoodsType, id=good_type_id)
-    
-    # This is where your game rules live.
-    # We find the improvement needed to make the selected good.
-    required_improvement_name = None
-    if good_type.name in ["Exotic Goods", "Weapons and Armor", "Wooden Goods"]:
-        required_improvement_name = "Craftsmen's Guild"
-    elif good_type.name == "Magic Items":
-        required_improvement_name = "Wizard's Academy"
-
-    eligible_strongholds = StrongholdInstance.objects.none()
-    if required_improvement_name:
-        eligible_strongholds = realm.strongholds.filter(
-            improvements__improvement_type__name=required_improvement_name
-        )
-
-    data = [{'id': sh.id, 'name': f"{sh.name} ({sh.land_unit.name})"} for sh in eligible_strongholds]
+    data = list(producible_goods.values('id', 'name'))
     return JsonResponse(data, safe=False)
 
 def get_existing_strongholds_json(request, realm_name):
@@ -1435,29 +1428,3 @@ def get_upgrade_details_json(request, upgrade_type_id):
         'duration': upgrade.duration_seasons
     }
     return JsonResponse(data)
-
-def get_good_details_json(request, good_type_id):
-    """Returns the cost and resource requirements for a specific good."""
-    good = get_object_or_404(GoodsType, id=good_type_id)
-    data = {
-        'id': good.id,
-        'name': good.name,
-        'cost_in_gold': good.cost_in_gold,
-        'required_resource_category': good.required_resource_category,
-        'required_resource_specific': good.required_resource_specific_id # Pass the ID
-    }
-    return JsonResponse(data)
-
-def get_resources_by_category_json(request, realm_name, category_name):
-    """
-    Returns a list of resources a realm possesses that match a specific category.
-    """
-    realm = get_object_or_404(Realm, name=realm_name)
-    
-    # Find all resources the realm has with a quantity > 0 that match the category
-    available_resources = realm.resources.filter(
-        category=category_name,
-        realmresource__quantity__gt=0
-    ).values('id', 'name')
-    
-    return JsonResponse(list(available_resources), safe=False)

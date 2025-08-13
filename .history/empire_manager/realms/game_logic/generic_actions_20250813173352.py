@@ -580,113 +580,27 @@ def finish_upgrade_stronghold(realm: Realm, action_data: dict, completed_action:
     except (StrongholdInstance.DoesNotExist, StrongholdImprovementType.DoesNotExist):
         print(f"ERROR: Could not finish upgrade for realm '{realm.name}'.")
 
-def calculate_produce_goods_cost(realm, good_type_id, resource_id=None):
-    """Calculates the dynamic cost for the Produce Goods action."""
-    try:
-        good_type = GoodsType.objects.get(id=good_type_id)
-        costs = {'population': 1} # Base population cost
-        is_overpaying = False # Default to false
-
-        resource_to_use = None
-        if good_type.required_resource_specific:
-            resource_to_use = good_type.required_resource_specific
-        elif resource_id:
-            resource_to_use = Resource.objects.get(id=resource_id)
-
-        if resource_to_use:
-            if resource_to_use.value <= 0: return {} # Avoid division by zero
-            calculated_quantity = int(Decimal(good_type.cost_in_gold) / resource_to_use.value)
-            quantity_needed = max(1, calculated_quantity)
-            if calculated_quantity < 1:
-                is_overpaying = True
-            costs[resource_to_use.name] = quantity_needed
-        
-        return {'costs': costs, 'is_overpaying': is_overpaying}
-    except (GoodsType.DoesNotExist, Resource.DoesNotExist):
-        return {}
-    
 def start_produce_goods(realm: Realm, post_data):
     """
-    Starts the production of a trade good, validating all costs and assignments.
+    Starts the production of a trade good.
+    This function will validate the player's choices (stronghold, good, resources)
+    and assign population units.
     """
-    good_id = post_data.get('good_to_produce')
-    stronghold_id = post_data.get('production_stronghold')
-    resource_id = post_data.get('resource_to_use') # Will be present if a category was required
-    assigned_pop_ids = post_data.getlist('assigned_population')
-
-    if not all([good_id, stronghold_id, assigned_pop_ids]):
-        return False, "You must select a good, a location, and assign population.", None
-
-    try:
-        good_type = GoodsType.objects.get(id=good_id)
-        stronghold = StrongholdInstance.objects.get(id=stronghold_id, realm=realm)
-        
-        # --- 1. Determine and Validate the Resource Cost ---
-        required_pop = 1 # Assuming a static population cost of 1 for now
-        resource_to_consume = None
-        
-        if good_type.required_resource_specific:
-            resource_to_consume = good_type.required_resource_specific
-        elif good_type.required_resource_category:
-            if not resource_id:
-                return False, "You must select a resource to produce this good.", None
-            resource_to_consume = Resource.objects.get(id=resource_id, category=good_type.required_resource_category)
-        
-        if not resource_to_consume:
-            return False, "A valid resource cost could not be determined for this good.", None
-
-        # Calculate the required quantity of the chosen resource
-        # cost_in_gold / resource_value = quantity needed
-        if resource_to_consume.value <= 0:
-            return False, "Cannot calculate cost for a resource with zero value.", None
-        
-        required_quantity = int(Decimal(good_type.cost_in_gold) / resource_to_consume.value)
-        if realm.get_resource_quantity(resource_to_consume.name) < required_quantity:
-            return False, f"Not enough {resource_to_consume.name}. Requires {required_quantity}.", None
-            
-        # --- 2. Validate Population ---
-        units_to_assign = PopulationUnit.objects.filter(id__in=assigned_pop_ids, realm=realm, status='idle')
-        if units_to_assign.count() != required_pop:
-            return False, "Invalid or busy population units were selected.", None
-
-        # --- 3. Pay Costs & Assign Population ---
-        with transaction.atomic():
-            realm.update_resource_quantity(resource_to_consume.name, -required_quantity)
-            units_to_assign.update(status='busy')
-
-        # --- 4. Return Data for OngoingAction ---
-        message = f"Production of {good_type.name} has begun at {stronghold.name}."
-        action_data = {
-            'good_type_id': good_type.id,
-            'assigned_pop_ids': [unit.id for unit in units_to_assign],
-            'final_duration': good_type.duration
-        }
-        
-        return True, message, action_data
-
-    except (GoodsType.DoesNotExist, StrongholdInstance.DoesNotExist, Resource.DoesNotExist, ValueError):
-        return False, "Invalid data submitted.", None
-
+    # We will add the full logic here later.
+    print("Received data for starting production:", post_data)
+    
+    # Placeholder: Return a success for now so we can test the frontend
+    # In the final version, this will return real data.
+    action_data = {} 
+    return True, "Production started (placeholder message).", action_data
 
 def finish_produce_goods(realm: Realm, action_data: dict, completed_action: OngoingAction):
     """
-    Finishes the production, adding the good and releasing the population.
+    Finishes the production, adding the completed goods to the realm's inventory
+    and releasing the assigned population.
     """
-    good_id = action_data.get('good_type_id')
-    if not good_id:
-        print(f"ERROR: No good_type_id in action_data for realm {realm.name}")
-        return
-
-    try:
-        good_type = GoodsType.objects.get(id=good_id)
-        with transaction.atomic():
-            # Add one unit of the completed good to the realm's inventory
-            realm.update_goods_quantity(good_type.name, 1)
-
-            # Release the assigned population
-            completed_action.assigned_population.all().update(status='idle')
-        
-        print(f"Finished producing '{good_type.name}' for realm '{realm.name}'.")
-
-    except GoodsType.DoesNotExist:
-        print(f"ERROR: Could not finish production for realm '{realm.name}'. Invalid good_type_id.")
+    # We will add the full logic here later.
+    print(f"Finishing production for realm {realm.name} with data: {action_data}")
+    
+    # Placeholder: Release any assigned population
+    completed_action.assigned_population.all().update(status='idle')

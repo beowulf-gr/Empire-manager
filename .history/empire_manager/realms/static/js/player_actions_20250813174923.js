@@ -472,21 +472,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                         body: JSON.stringify({ action_key: 'produce_goods', good_type_id: goodId, resource_id: resourceId })
                     });
-                    const data = await response.json(); // <-- Get the whole data object
-                    const costs = data.costs || {};
-                    const isOverpaying = data.is_overpaying || false;
-
+                    const costs = await response.json();
                     displayCostPreview(costs);
-
-                    // Display a warning if the player is overpaying
-                    const previewContainer = document.getElementById('cost-preview-container');
-                    if (isOverpaying) {
-                        const warning = document.createElement('p');
-                        warning.style.color = 'orange';
-                        warning.style.fontWeight = 'bold';
-                        warning.textContent = 'Warning: Using this valuable resource will result in some waste.';
-                        previewContainer.appendChild(warning);
-                    }
 
                     // Build population dropdowns
                     const requiredPop = costs.population || 0;

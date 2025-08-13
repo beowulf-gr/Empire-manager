@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 import random
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 
 MINERAL_SUBTYPES = [
     ("Adamantine", 3),
@@ -53,14 +53,6 @@ class GoodsType(models.Model):
                                        help_text="Base cost in gold to produce one unit.")
     required_resource_category = models.CharField(max_length=50, blank=True, null=True,
                                                   help_text="If production requires a resource from a specific category (e.g., Minerals).")
-    # ### ADD THIS FIELD FOR SPECIFIC REQUIREMENTS ###
-    required_resource_specific = models.ForeignKey(
-        'Resource',
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        help_text="If production requires one specific resource (e.g., Iron)."
-    )
     
     duration = models.IntegerField(default=1) # Duration in seasons to produce
 

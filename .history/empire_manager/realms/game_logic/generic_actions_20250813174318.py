@@ -585,7 +585,6 @@ def calculate_produce_goods_cost(realm, good_type_id, resource_id=None):
     try:
         good_type = GoodsType.objects.get(id=good_type_id)
         costs = {'population': 1} # Base population cost
-        is_overpaying = False # Default to false
 
         resource_to_use = None
         if good_type.required_resource_specific:
@@ -595,13 +594,10 @@ def calculate_produce_goods_cost(realm, good_type_id, resource_id=None):
 
         if resource_to_use:
             if resource_to_use.value <= 0: return {} # Avoid division by zero
-            calculated_quantity = int(Decimal(good_type.cost_in_gold) / resource_to_use.value)
-            quantity_needed = max(1, calculated_quantity)
-            if calculated_quantity < 1:
-                is_overpaying = True
+            quantity_needed = int(Decimal(good_type.cost_in_gold) / resource_to_use.value)
             costs[resource_to_use.name] = quantity_needed
         
-        return {'costs': costs, 'is_overpaying': is_overpaying}
+        return costs
     except (GoodsType.DoesNotExist, Resource.DoesNotExist):
         return {}
     

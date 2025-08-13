@@ -11,11 +11,6 @@ class Command(BaseCommand):
         except Resource.DoesNotExist:
             self.stdout.write(self.style.ERROR("The 'Iron' resource does not exist. Please create it before running this command."))
             return
-        try:
-            wood_resource = Resource.objects.get(name="Wood")
-        except Resource.DoesNotExist:
-            self.stdout.write(self.style.ERROR("The 'Wood' resource does not exist. Please create it before running this command."))
-            return
         
         goods_types_data = [
             {
@@ -45,8 +40,7 @@ class Command(BaseCommand):
                 "description": "An excellent option if your realm produces excess lumber. This category includes furniture, wagons, ships, and other items.",
                 "value": 1, "duration": 1,
                 "cost_in_gold": 0.67, # Costs 0.67 GP worth of Wood
-                "required_resource_category": None,
-                "required_resource_specific": wood_resource
+                "required_resource_category": "Lumber"
             },
         ]
 
@@ -58,8 +52,7 @@ class Command(BaseCommand):
                     "value": good_data["value"],
                     "duration": good_data["duration"],
                     "cost_in_gold": good_data["cost_in_gold"],
-                    "required_resource_category": good_data.get("required_resource_category"),
-                    "required_resource_specific": good_data.get("required_resource_specific")
+                    "required_resource_category": good_data.get("required_resource_category")
                 }
             )
             self.stdout.write(self.style.SUCCESS(f"Created/Updated GoodsType: {good_data['name']}"))

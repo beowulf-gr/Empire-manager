@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 import random
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 
 MINERAL_SUBTYPES = [
     ("Adamantine", 3),
