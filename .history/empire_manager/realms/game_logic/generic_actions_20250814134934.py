@@ -625,7 +625,7 @@ def start_produce_goods(realm: Realm, post_data):
         stronghold = StrongholdInstance.objects.get(id=stronghold_id, realm=realm)
         
         # --- 1. Determine and Validate the Resource Cost ---
-        required_pop = quantity # Assuming a static population cost of 1 for now
+        required_pop = 1 # Assuming a static population cost of 1 for now
         resource_to_consume = None
         
         if good_type.required_resource_specific:
@@ -688,8 +688,8 @@ def finish_produce_goods(realm: Realm, action_data: dict, completed_action: Ongo
     try:
         good_type = GoodsType.objects.get(id=good_id)
         with transaction.atomic():
-            # Add the correct quantity of the completed good to the realm's inventory
-            realm.update_goods_quantity(good_type.name, quantity_to_add)
+            # Add one unit of the completed good to the realm's inventory
+            realm.update_goods_quantity(good_type.name, 1)
 
             # Release the assigned population
             completed_action.assigned_population.all().update(status='idle')

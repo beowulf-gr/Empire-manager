@@ -417,8 +417,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const resourceSelect = document.getElementById('resource_to_use');
                 const popContainer = document.getElementById('population-dropdown-container');
 
-                let eligibleStrongholds = [];
-
                 // 1. Populate the first dropdown
                 await fetchSelectOptions(gameData.allProducibleGoodsUrl, goodSelect);
 
@@ -434,93 +432,84 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!goodId) return;
 
                     // Fetch and show the stronghold dropdown
-                    eligibleStrongholds = await fetchSelectOptions(`/realm/${realmName}/get_strongholds_for_good_json/${goodId}/`, strongholdSelect);
+                    await fetchSelectOptions(`/realm/${realmName}/get_strongholds_for_good_json/${goodId}/`, strongholdSelect);
                     strongholdContainer.style.display = 'block';
                 });
 
                 // 3. Listener for when a STRONGHOLD is chosen
-                strongholdSelect.addEventListener('change', function() {
+                strongholdSelect.addEventListener('change', async function() {
+                    const goodId = goodSelect.value;
                     const strongholdId = this.value;
-                    const selectedStronghold = eligibleStrongholds.find(s => s.id == strongholdId);
-                    quantityContainer.style.display = 'none';
+                    
+                    // Hide lower sections
                     resourceContainer.style.display = 'none';
                     popContainer.innerHTML = '';
-                    displayCostPreview({});
-                    if (!selectedStronghold) {
-                        quantityContainer.style.display = 'none';
-                        return;
-                    }
-                    
-                    const maxCapacity = selectedStronghold.production_capacity;
-                    quantityContainer.innerHTML = `
-                        <label for="quantity">3. Select Quantity (Max: ${maxCapacity}):</label>
-                        <select id="quantity" name="quantity" required></select>`;
-                    const quantitySelect = document.getElementById('quantity');
-                    for (let i = 1; i <= maxCapacity; i++) {
-                        quantitySelect.innerHTML += `<option value="${i}">${i}</option>`;
-                    }
-                    quantityContainer.style.display = 'block';
-                    
-                    quantitySelect.addEventListener('change', () => {
-                        // Trigger a change on the stronghold select to recalculate everything
-                        // This avoids duplicating the complex logic below
-                        strongholdSelect.dispatchEvent(new Event('final_recalculation'));
-                    });
-                    
-                    // Trigger initial calculation
-                    quantitySelect.dispatchEvent(new Event('change'));
-                });
+                    if (!goodId || !strongholdId) { displayCostPreview({}); return; }
 
-                strongholdSelect.addEventListener('final_recalculation', async function() {
-                        const goodId = goodSelect.value;
-                        const quantity = document.getElementById('quantity').value;
-                        const detailsRes = await fetch(`/realm/get_good_details_json/${goodId}/`);
-                        const details = await detailsRes.json();
-                        
+                    const detailsRes = await fetch(`/realm/get_good_details_json/${goodId}/`);
+                    const details = await detailsRes.json();
+                    
+                    // Show or hide the resource dropdown based on requirements
+                    if (details.required_resource_category) {
+                        resourceSelect.required = true;
+                        await fetchSelectOptions(`/realm/${realmName}/get_resources_by_category_json/${details.required_resource_category}/`, resourceSelect);
+                        resourceContainer.style.display = 'block';
+                    } else {
+                        resourceSelect.required = false;
                         resourceContainer.style.display = 'none';
-                        popContainer.innerHTML = '';
-                        if (details.required_resource_category) {
-                            const resourceSelect = document.createElement('select');
-                            resourceSelect.id = 'resource_to_use';
-                            resourceSelect.name = 'resource_to_use';
-                            resourceSelect.required = true;
-                            resourceContainer.innerHTML = '<label for="resource_to_use">4. Select Resource to Use:</label>';
-                            resourceContainer.appendChild(resourceSelect);
-                            await fetchSelectOptions(`/realm/${realmName}/get_resources_by_category_json/${details.required_resource_category}/`, resourceSelect);
-                            resourceContainer.style.display = 'block';
-                            resourceSelect.addEventListener('change', () => {
-                                strongholdSelect.dispatchEvent(new Event('final_recalculation'));
-                            });
-                        }
+                    }
+                    
+                    // Now, trigger a change on the resource select to update the final preview
+                    // This ensures the cost and population show up even if no resource choice is needed
+                    resourceSelect.dispatchEvent(new Event('change'));
+                });
+                
+                // 4. Listener for when a RESOURCE is chosen (or for final calculation)
+                resourceSelect.addEventListener('change', async function() {
+                    const goodId = goodSelect.value;
+                    const resourceId = this.value;
 
-                        const resourceId = document.getElementById('resource_to_use')?.value;
-                        const response = await fetch(previewUrl, {
-                            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                            body: JSON.stringify({ action_key: 'produce_goods', good_type_id: goodId, resource_id: resourceId, quantity: quantity })
-                        });
-                        const data = await response.json();
-                        const costs = data.costs || {};
-                        displayCostPreview(costs);
-                        if (data.is_overpaying) { /* ... display warning ... */ }
-
-                        const requiredPop = costs.population || 0;
-                        if (allIdlePopulation.length < requiredPop) {
-                            popContainer.innerHTML = `<p style="color: red;">Not enough idle population!</p>`;
-                            formSubmitButton.disabled = true;
-                        } else {
-                            formSubmitButton.disabled = false;
-                            popContainer.innerHTML = `<p>Assign ${requiredPop} population unit(s):</p>`;
-                            for (let i = 0; i < requiredPop; i++) {
-                                const newSelect = document.createElement('select');
-                                newSelect.name = 'assigned_population'; newSelect.className = 'population-select'; newSelect.required = true;
-                                newSelect.innerHTML = '<option value="" selected>-- Select a Unit --</option>';
-                                allIdlePopulation.forEach(unit => { newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`; });
-                                popContainer.appendChild(newSelect);
-                                newSelect.addEventListener('change', updatePopulationDropdowns);
-                            }
-                        }
+                    // Fetch final costs from the backend
+                    const response = await fetch(previewUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify({ action_key: 'produce_goods', good_type_id: goodId, resource_id: resourceId })
                     });
-                } else {
+                    const data = await response.json(); // <-- Get the whole data object
+                    const costs = data.costs || {};
+                    const isOverpaying = data.is_overpaying || false;
+
+                    displayCostPreview(costs);
+
+                    // Display a warning if the player is overpaying
+                    const previewContainer = document.getElementById('cost-preview-container');
+                    if (isOverpaying) {
+                        const warning = document.createElement('p');
+                        warning.style.color = 'orange';
+                        warning.style.fontWeight = 'bold';
+                        warning.textContent = 'Warning: Using this valuable resource will result in some waste.';
+                        previewContainer.appendChild(warning);
+                    }
+
+                    // Build population dropdowns
+                    const requiredPop = costs.population || 0;
+                    if (allIdlePopulation.length < requiredPop) {
+                        popContainer.innerHTML = `<p style="color: red;">Not enough idle population!</p>`;
+                        formSubmitButton.disabled = true;
+                    } else {
+                        formSubmitButton.disabled = false;
+                        popContainer.innerHTML = `<p>Assign ${requiredPop} population unit(s):</p>`;
+                        for (let i = 0; i < requiredPop; i++) {
+                            const newSelect = document.createElement('select');
+                            newSelect.name = 'assigned_population'; newSelect.className = 'population-select'; newSelect.required = true;
+                            newSelect.innerHTML = '<option value="" selected>-- Select a Unit --</option>';
+                            allIdlePopulation.forEach(unit => { newSelect.innerHTML += `<option value="${unit.id}">${unit.display_name}</option>`; });
+                            popContainer.appendChild(newSelect);
+                            newSelect.addEventListener('change', updatePopulationDropdowns);
+                        }
+                    }
+                });
+            } else {
                 // Generic handler for actions like "Recruit Population"
                 await buildGenericInputs(action, dynamicInputsDiv);
             }

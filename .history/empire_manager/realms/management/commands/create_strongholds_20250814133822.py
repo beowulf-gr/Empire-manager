@@ -24,7 +24,8 @@ class Command(BaseCommand):
                 "population_cost": 2, 
                 "resource_costs": {"Wood": 10, "Stone": 10}, 
                 "gold_cost": 10,
-                "population_capacity_bonus": 4
+                "population_capacity_bonus": 4,
+                "production_capacity": 8
             },
             {
                 "name": "Keep", 
@@ -44,7 +45,8 @@ class Command(BaseCommand):
                 "population_cost": 1, 
                 "resource_costs": {"Wood": 5, "Stone": 5}, 
                 "gold_cost": 5,
-                "population_capacity_bonus": 2
+                "population_capacity_bonus": 2,
+                "production_capacity": 4
             },
             {
                 "name": "Village", 
@@ -54,20 +56,23 @@ class Command(BaseCommand):
                 "population_cost": 1, 
                 "resource_costs": {"Wood": 2, "Stone": 2}, 
                 "gold_cost": 2,
-                "population_capacity_bonus": 1
+                "population_capacity_bonus": 1,
+                "production_capacity": 1
             },
             ]
 
         for stronghold_type in stronghold_types:
             # Check if the StrongholdType already exists to avoid duplication
-            stronghold, created = StrongholdType.objects.get_or_create(
+            stronghold, created = StrongholdType.objects.update_or_create(
                 name=stronghold_type["name"],
                 defaults={"description": stronghold_type["description"],
                           "benefits": stronghold_type["benefits"],
                           "duration_seasons": stronghold_type["duration_seasons"],
                           "population_cost": stronghold_type["population_cost"],
                           "resource_costs": stronghold_type["resource_costs"],
-                          "population_capacity_bonus": stronghold_type["population_capacity_bonus"]}
+                          "gold_cost": stronghold_type["gold_cost"],
+                          "population_capacity_bonus": stronghold_type["population_capacity_bonus"],
+                          "production_capacity": stronghold_type["production_capacity"]}
             )
 
             if created:

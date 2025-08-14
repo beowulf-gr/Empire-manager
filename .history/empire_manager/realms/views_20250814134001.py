@@ -1343,9 +1343,8 @@ def preview_action_cost(request, realm_name):
         elif action_key == 'produce_goods':
             good_type_id = data.get('good_type_id')
             resource_id = data.get('resource_id') # This may be null
-            quantity = data.get('quantity', 1) # <-- Get the desired quantity
             if good_type_id:
-                costs = calculate_produce_goods_cost(realm, good_type_id, resource_id, quantity)
+                costs = calculate_produce_goods_cost(realm, good_type_id, resource_id)
     
             
         # Add 'else if' blocks here for other actions with dynamic costs

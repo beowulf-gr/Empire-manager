@@ -625,7 +625,7 @@ def start_produce_goods(realm: Realm, post_data):
         stronghold = StrongholdInstance.objects.get(id=stronghold_id, realm=realm)
         
         # --- 1. Determine and Validate the Resource Cost ---
-        required_pop = quantity # Assuming a static population cost of 1 for now
+        required_pop = 1 # Assuming a static population cost of 1 for now
         resource_to_consume = None
         
         if good_type.required_resource_specific:

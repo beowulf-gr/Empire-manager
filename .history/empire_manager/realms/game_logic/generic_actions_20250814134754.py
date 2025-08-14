@@ -625,7 +625,7 @@ def start_produce_goods(realm: Realm, post_data):
         stronghold = StrongholdInstance.objects.get(id=stronghold_id, realm=realm)
         
         # --- 1. Determine and Validate the Resource Cost ---
-        required_pop = quantity # Assuming a static population cost of 1 for now
+        required_pop = 1 # Assuming a static population cost of 1 for now
         resource_to_consume = None
         
         if good_type.required_resource_specific:
@@ -646,7 +646,7 @@ def start_produce_goods(realm: Realm, post_data):
         total_gold_value_needed = Decimal(good_type.cost_in_gold) * Decimal(quantity)
         calculated_quantity = int(total_gold_value_needed / resource_to_consume.value)
         required_quantity = max(1, calculated_quantity)
-
+        
         if realm.get_resource_quantity(resource_to_consume.name) < required_quantity:
             return False, f"Not enough {resource_to_consume.name}. Requires {required_quantity}.", None
             
@@ -661,12 +661,11 @@ def start_produce_goods(realm: Realm, post_data):
             units_to_assign.update(status='busy')
 
         # --- 4. Return Data for OngoingAction ---
-        message = f"Production of {quantity} {good_type.name} has begun at {stronghold.name}."
+        message = f"Production of {good_type.name} has begun at {stronghold.name}."
         action_data = {
             'good_type_id': good_type.id,
             'assigned_pop_ids': [unit.id for unit in units_to_assign],
-            'final_duration': good_type.duration,
-            'quantity': quantity,  # <-- Pass the quantity along
+            'final_duration': good_type.duration
         }
         
         return True, message, action_data
@@ -680,7 +679,6 @@ def finish_produce_goods(realm: Realm, action_data: dict, completed_action: Ongo
     Finishes the production, adding the good and releasing the population.
     """
     good_id = action_data.get('good_type_id')
-    quantity_to_add = action_data.get('quantity', 1) # <-- GET THE QUANTITY
     if not good_id:
         print(f"ERROR: No good_type_id in action_data for realm {realm.name}")
         return
@@ -688,8 +686,8 @@ def finish_produce_goods(realm: Realm, action_data: dict, completed_action: Ongo
     try:
         good_type = GoodsType.objects.get(id=good_id)
         with transaction.atomic():
-            # Add the correct quantity of the completed good to the realm's inventory
-            realm.update_goods_quantity(good_type.name, quantity_to_add)
+            # Add one unit of the completed good to the realm's inventory
+            realm.update_goods_quantity(good_type.name, 1)
 
             # Release the assigned population
             completed_action.assigned_population.all().update(status='idle')
