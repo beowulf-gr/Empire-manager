@@ -117,6 +117,16 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Where collected static files will live
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+if DEBUG:
+    # Dev: no hashing, fast reload
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    # Production: hashed filenames for cache busting
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
