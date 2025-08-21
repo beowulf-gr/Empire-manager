@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Actions for {{ realm.name }}</title>
+    {% load static %}
+    {% load humanize %} {# Load humanize for intcomma filter #}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+    <style>
+        /* Message Display Styling */
+        .messages {
+            list-style: none;
+            padding: 10px 0;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .messages li {
+            padding: 8px 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .messages li.success {
+            background-color: #d4edda; /* Light green */
+            color: #155724; /* Dark green */
+            border: 1px solid #c3e6cb;
+        }
+        .messages li.error {
+            background-color: #f8d7da; /* Light red */
+            color: #721c24; /* Dark red */
+            border: 1px solid #f5c6cb;
+        }
+        .messages li.warning {
+            background-color: #fff3cd; /* Light yellow */
+            color: #856404; /* Dark yellow */
+            border: 1px solid #ffeeba;
+        }
+        .messages li.info {
+            background-color: #d1ecf1; /* Light blue */
+            color: #0c5460; /* Dark blue */
+            border: 1px solid #bee5eb;
+        }
+
+        /* General Layout and Button Styling */
+        .available-actions ul, .ongoing-actions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .available-actions li, .ongoing-actions li {
+            margin-bottom: 10px;
+        }
+
+        .action-details-link { /* Renamed for clarity */
+            margin-left: 10px;
+            text-decoration: none;
+        }
+
+        .large-button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            margin-top: 20px;
+            cursor: pointer;
+            display: block; /* Force to new line */
+            width: fit-content; /* Make it only as wide as its content */
+            margin-left: 0;
+            margin-right: auto;
+        }
+        
+        .back-to-realm-button { /* Renamed for clarity */
+            display: inline-block; /* Behaves like a block but can sit next to other inline-blocks */
+            padding: 10px 20px;
+            margin-top: 15px; /* Add some space below the End Season button */
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .back-to-realm-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top of everything */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            /*display: flex; /* Use flexbox to center content */
+            /*justify-content: center; /* Center horizontally */
+            /*align-items: center; /* Center vertically */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Adjust width as needed */
+            max-width: 600px; /* Max width for readability */
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            animation-name: animatetop;
+            animation-duration: 0.4s;
+            position: relative; /* For close button positioning */
+            margin: auto; /* Keep this to ensure centering */
+        }
+
+        /* Add animation */
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Style for form elements within modals */
+        .modal-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="number"],
+        .modal-content select {
+            width: calc(100% - 12px); /* Adjust for padding and border */
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Include padding and border in width */
+        }
+
+        .modal-content button[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 15px;
+        }
+
+        .modal-content button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .modal-content button[type="submit"]:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+    </style>
+</head>
+<body>
+    <h1>Actions for {{ realm.name }} (Season: {{ realm.season.name }}, Year: {{ realm.year }})</h1>
+
+    {# Message Display Block #}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div style="display: none;" id="available-actions-data">{{ available_actions_json }}</div>
+
+    <div class="available-actions">
+        <h2>Available Actions</h2>
+        <ul>
+            {% for action in available_actions %}
+                <li>
+                    <button type="button" class="action-button" data-action-slug="{{ action.action_key }}" data-action-name="{{ action.name }}">{{ action.name }}</button>
+                    <!-- <button type="button" class="action-button" data-action-slug="{{ action.slug }}" data-action-name="{{ action.name }}">{{ action.name }}</button> -->
+                    <a href="#" class="action-details-link" data-action="{{ action.name }}">Details</a>
+                </li>
+            {% empty %}
+                <li>No actions available this season.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="ongoing-actions">
+        <h2>Ongoing Actions</h2>
+        <ul>
+            {% for action in ongoing_actions %}
+                <li>
+                    {{ action.display_name }} (Started: {{ action.start_season }} Year {{ action.start_year }}, Duration: {{ action.duration }} seasons)
+                </li>
+            {% empty %}
+                <li>No ongoing actions.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <button id="end-season-btn" class="large-button">End Season</button>
+
+    <a href="{% url 'realm_detail' name=realm.name %}" class="back-to-realm-button">Back to Realm Details</a>
+
+    <div id="unified-action-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="modal-title"></h3>
+            <p id="modal-description"></p>
+            <form id="dynamic-action-form" method="post" action="{% url 'start_action' realm_name=realm.name %}">
+                {% csrf_token %}
+                <input type="hidden" name="action_name" id="form-action-type">
+                <input type="hidden" name="duration" id="form-duration">
+                <div id="dynamic-inputs">
+                    </div>
+                <p id="buy-resources-cost-preview" style="display: none;"></p>
+                <p id="buy-goods-cost-preview" style="display: none;"></p>
+                
+                <button type="submit" id="form-submit-button"></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- <div id="realm-info" data-treasury="{{ realm.treasury|default:0 }}" style="display:none;"></div> -->
+
+    <div id="game-data"
+        data-realm-name="{{ realm.name }}"
+        data-csrf-token="{{ csrf_token }}"
+        data-treasury="{{ realm.treasury|default:0 }}"
+        data-preview-url="{% url 'preview_action_cost' realm_name=realm.name %}"
+        data-idle-pop-url="{% url 'get_idle_population_json' realm_name=realm.name %}"
+        data-land-units-url="{% url 'get_land_units_json' realm_name=realm.name %}"
+        data-stronghold-types-url="{% url 'get_stronghold_types_json' %}"
+        data-road-eligible-url="{% url 'get_road_eligible_land_units_json' realm_name=realm.name %}"
+        data-mine-eligible-url="{% url 'get_mine_eligible_land_units_json' realm_name=realm.name %}"
+        style="display: none;">
+    </div>
+
+    {% load static %}
+    <script src="{% static 'js/player_actions.js' %}"></script>
+
+</body>
+</html>

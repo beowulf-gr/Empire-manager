@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Actions for {{ realm.name }}</title>
+    {% load static %}
+    {% load humanize %} {# Load humanize for intcomma filter #}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/form_style.css' %}">
+    <style>
+        /* Message Display Styling */
+        .messages {
+            list-style: none;
+            padding: 10px 0;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .messages li {
+            padding: 8px 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .messages li.success {
+            background-color: #d4edda; /* Light green */
+            color: #155724; /* Dark green */
+            border: 1px solid #c3e6cb;
+        }
+        .messages li.error {
+            background-color: #f8d7da; /* Light red */
+            color: #721c24; /* Dark red */
+            border: 1px solid #f5c6cb;
+        }
+        .messages li.warning {
+            background-color: #fff3cd; /* Light yellow */
+            color: #856404; /* Dark yellow */
+            border: 1px solid #ffeeba;
+        }
+        .messages li.info {
+            background-color: #d1ecf1; /* Light blue */
+            color: #0c5460; /* Dark blue */
+            border: 1px solid #bee5eb;
+        }
+
+        /* General Layout and Button Styling */
+        .available-actions ul, .ongoing-actions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .available-actions li, .ongoing-actions li {
+            margin-bottom: 10px;
+        }
+
+        .action-details-link { /* Renamed for clarity */
+            margin-left: 10px;
+            text-decoration: none;
+        }
+
+        .large-button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            margin-top: 20px;
+            cursor: pointer;
+            display: block; /* Force to new line */
+            width: fit-content; /* Make it only as wide as its content */
+            margin-left: 0;
+            margin-right: auto;
+        }
+        
+        .back-to-realm-button { /* Renamed for clarity */
+            display: inline-block; /* Behaves like a block but can sit next to other inline-blocks */
+            padding: 10px 20px;
+            margin-top: 15px; /* Add some space below the End Season button */
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .back-to-realm-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top of everything */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            /*display: flex; /* Use flexbox to center content */
+            /*justify-content: center; /* Center horizontally */
+            /*align-items: center; /* Center vertically */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Adjust width as needed */
+            max-width: 600px; /* Max width for readability */
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            animation-name: animatetop;
+            animation-duration: 0.4s;
+            position: relative; /* For close button positioning */
+            margin: auto; /* Keep this to ensure centering */
+        }
+
+        /* Add animation */
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Style for form elements within modals */
+        .modal-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="number"],
+        .modal-content select {
+            width: calc(100% - 12px); /* Adjust for padding and border */
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Include padding and border in width */
+        }
+
+        .modal-content button[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 15px;
+        }
+
+        .modal-content button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .modal-content button[type="submit"]:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+    </style>
+</head>
+<body>
+    <h1>Actions for {{ realm.name }} (Season: {{ realm.season.name }}, Year: {{ realm.year }})</h1>
+
+    {# Message Display Block #}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div style="display: none;" id="available-actions-data">{{ available_actions_json }}</div>
+
+    <div class="available-actions">
+        <h2>Available Actions</h2>
+        <ul>
+            {% for action in available_actions %}
+                <li>
+                    <button type="button" class="action-button" data-action-slug="{{ action.action_key }}" data-action-name="{{ action.name }}">{{ action.name }}</button>
+                    <!-- <button type="button" class="action-button" data-action-slug="{{ action.slug }}" data-action-name="{{ action.name }}">{{ action.name }}</button> -->
+                    <a href="#" class="action-details-link" data-action="{{ action.name }}">Details</a>
+                </li>
+            {% empty %}
+                <li>No actions available this season.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="ongoing-actions">
+        <h2>Ongoing Actions</h2>
+        <ul>
+            {% for action in ongoing_actions %}
+                <li>
+                    {{ action.display_name }} (Started: {{ action.start_season }} Year {{ action.start_year }}, Duration: {{ action.duration }} seasons)
+                </li>
+            {% empty %}
+                <li>No ongoing actions.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <button id="end-season-btn" class="large-button">End Season</button>
+
+    <a href="{% url 'realm_detail' name=realm.name %}" class="back-to-realm-button">Back to Realm Details</a>
+
+    <div id="unified-action-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="modal-title"></h3>
+            <p id="modal-description"></p>
+            <form id="dynamic-action-form" method="post" action="{% url 'start_action' realm_name=realm.name %}">
+                {% csrf_token %}
+                <input type="hidden" name="action_name" id="form-action-type">
+                <input type="hidden" name="duration" id="form-duration">
+                <div id="dynamic-inputs">
+                    </div>
+                <p id="buy-resources-cost-preview" style="display: none;"></p>
+                <p id="buy-goods-cost-preview" style="display: none;"></p>
+                
+                <button type="submit" id="form-submit-button"></button>
+            </form>
+        </div>
+    </div>
+
+    <div id="realm-info" data-treasury="{{ realm.treasury|default:0 }}" style="display:none;"></div>
+
+    <script>
+        // Access realm.treasury directly from Django context
+        // const currentTreasury = {{ realm.treasury|default:0 }};
+        const currentTreasury = parseFloat(document.getElementById('realm-info').dataset.treasury);
+
+        // --- Global DOM element references (define once) ---
+        const actionButtons = document.querySelectorAll('.action-button');
+        const actionDetailsLinks = document.querySelectorAll('.action-details-link');
+        const unifiedActionModal = document.getElementById('unified-action-modal');
+        const closeButton = unifiedActionModal.querySelector('.close-button');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDescription = document.getElementById('modal-description');
+        const dynamicActionForm = document.getElementById('dynamic-action-form');
+        const formActionType = document.getElementById('form-action-type');
+        const formDuration = document.getElementById('form-duration');
+        const dynamicInputsDiv = document.getElementById('dynamic-inputs');
+        const formSubmitButton = document.getElementById('form-submit-button');
+        const endSeasonBtn = document.getElementById('end-season-btn');
+        const availableActionsData = JSON.parse(document.getElementById('available-actions-data').textContent);
+
+        // Preview elements (always exist, hidden/shown as needed)
+        const buyResourcesCostPreview = document.getElementById('buy-resources-cost-preview'); // For Buy Resources
+        const buyGoodsCostPreview = document.getElementById('buy-goods-cost-preview'); // For Buy Resources
+
+        // Map to quickly find action details by slug or name
+        const actionsMap = new Map();
+        availableActionsData.forEach(action => {
+            actionsMap.set(action.name, action);
+            actionsMap.set(action.action_key, action); // <-- Change to 'action_key'
+        });
+
+        // Store fetched data for client-side calculations
+        let allGoodsTypesData = []; // Populated by get_goods_types_json
+        let allResourcesData = []; // Populated by get_resource_types_json
+        let allPopulationRacesData = []; // Populated by get_population_races_json
+
+        // Helper function to fetch options for a select dropdown
+        async function fetchSelectOptions(url, selectElement) {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                selectElement.innerHTML = '<option value="" disabled selected>Select an option</option>';
+                data.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option.id;
+                    opt.textContent = option.name;
+                    // Store relevant data directly in the array that will be filtered
+                    if (url.includes('get_resource_types_json')) {
+                        // Ensure 'value' is a number for calculation
+                        option.value_numeric = parseFloat(option.value); // Convert to float if not already
+                        allResourcesData.push(option);
+                    } else if (url.includes('get_goods_types_json')) {
+                        // Ensure 'value' is a number for calculation
+                        option.value_numeric = parseFloat(option.value); // Convert to float if not already
+                        allGoodsTypesData.push(option);
+                    } else if (url.includes('get_population_races_json')) {
+                        allPopulationRacesData.push(option);
+                    }
+                    selectElement.appendChild(opt);
+                });
+                return data; // Return data for chaining or storing
+            } catch (error) {
+                console.error("Error fetching options from " + url + ":", error);
+                selectElement.innerHTML = '<option value="" disabled selected>Error loading options</option>';
+                return []; // Return empty array on error
+            }
+        }
+
+        // Helper function to build dynamic input fields for a generic action
+        async function buildDynamicInputs(action, containerDiv) {
+            containerDiv.innerHTML = ''; // Clear existing inputs
+            for (const inputDef of action.inputs) {
+                const label = document.createElement('label');
+                label.setAttribute('for', inputDef.name);
+                label.textContent = inputDef.label;
+                containerDiv.appendChild(label);
+
+                let inputElement;
+                if (inputDef.type === 'select') {
+                    inputElement = document.createElement('select');
+                    inputElement.id = inputDef.name;
+                    inputElement.name = inputDef.name;
+                    if (inputDef.required) inputElement.required = true;
+                    // Dynamically fetch options based on options_url (for select types)
+                    await fetchSelectOptions(inputDef.options_url, inputElement);
+                } else if (inputDef.type === 'number') {
+                    inputElement = document.createElement('input');
+                    inputElement.type = 'number';
+                    inputElement.id = inputDef.name;
+                    inputElement.name = inputDef.name;
+                    if (inputDef.required) inputElement.required = true;
+                    if (inputDef.default !== undefined) inputElement.value = inputDef.default;
+                    if (inputDef.min !== undefined) inputElement.min = inputDef.min;
+                    if (inputDef.max !== undefined) inputElement.max = inputDef.max;
+                } else { // Default to text
+                    inputElement = document.createElement('input');
+                    inputElement.type = 'text';
+                    inputElement.id = inputDef.name;
+                    inputElement.name = inputDef.name;
+                    if (inputDef.required) inputElement.required = true;
+                    if (inputDef.default !== undefined) inputElement.value = inputDef.default;
+                }
+                containerDiv.appendChild(inputElement);
+                containerDiv.appendChild(document.createElement('br'));
+                containerDiv.appendChild(document.createElement('br'));
+            }
+        }
+
+
+        // Main event listener for action buttons
+        actionButtons.forEach(button => {
+            button.addEventListener('click', async function(event) {
+                // const actionSlug = this.getAttribute('data-action-slug');
+                // const actionName = this.getAttribute('data-action-name');
+                // const action = actionsMap.get(actionName); // Get full action definition
+                const actionKey = this.getAttribute('data-action-slug');
+                const action = actionsMap.get(actionKey);
+
+                if (!action) {
+                    console.error("Action details not found for:", actionKey);
+                    return;
+                }
+
+                // Reset modal for new action
+                modalTitle.textContent = action.name;
+                modalDescription.textContent = action.description;
+                formActionType.value = action.action_key; // Use display name for submission
+                formDuration.value = action.duration;
+                formSubmitButton.textContent = action.submit_text;
+                dynamicInputsDiv.innerHTML = ''; // Clear previous inputs
+                formSubmitButton.style.display = 'block'; // Ensure submit button is visible
+
+                // Hide all preview elements by default, specific logic will show them
+                buyResourcesCostPreview.style.display = 'none'; // For Buy Resources
+                buyGoodsCostPreview.style.display = 'none'; // For Buy Goods
+
+                if (actionKey === "buy_resources") { // Handle "Buy Resources" action
+                    dynamicInputsDiv.innerHTML = `
+                        <label for="resource_id_buy">Resource Type:</label>
+                        <select id="resource_id_buy" name="resource_id" required>
+                            <option value="" disabled selected>Select Resource Type</option>
+                        </select><br><br>
+
+                        <label for="quantity_buy">Quantity:</label>
+                        <input type="number" id="quantity_buy" name="quantity" value="1" min="1" required><br><br>
+
+                        <label for="knowledge_economics_modifier_buy">Knowledge (Economics) Modifier:</label>
+                        <input type="number" id="knowledge_economics_modifier_buy" name="knowledge_economics_modifier" value="0" required><br><br>
+                        
+                        <p>Current Treasury: ${currentTreasury.toLocaleString()} Gold</p>
+                        <p id="buy-resources-cost-preview-internal"></p> {# Cost preview for buy resources #}
+                    `;
+                    // Re-get references to newly created elements inside the modal
+                    const newResourceIdSelect = document.getElementById('resource_id_buy');
+                    const newQuantityInput = document.getElementById('quantity_buy');
+                    const newKnowledgeModifierInput = document.getElementById('knowledge_economics_modifier_buy');
+                    const newBuyResourcesCostPreviewInternal = document.getElementById('buy-resources-cost-preview-internal');
+
+                    await fetchSelectOptions("{% url 'get_resource_types_json' %}", newResourceIdSelect);
+                    
+                    // Add event listeners for cost preview
+                    newResourceIdSelect.onchange = () => updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
+                    newQuantityInput.oninput = () => updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
+                    newKnowledgeModifierInput.oninput = () => updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
+                    
+                    // Initial update call
+                    updateBuyResourcesPreview(newResourceIdSelect, newQuantityInput, newBuyResourcesCostPreviewInternal);
+                    buyResourcesCostPreview.style.display = 'block'; // Show external buy resources preview container
+
+                } else if (actionSlug === "buy_goods") { // Handle "Buy Goods" action
+                    dynamicInputsDiv.innerHTML = `
+                        <label for="goods_type_id_buy">Trade Good Type:</label>
+                        <select id="goods_type_id_buy" name="goods_type_id" required>
+                            <option value="" disabled selected>Select Trade Good Type</option>
+                        </select><br><br>
+
+                        <label for="quantity_buy">Quantity:</label>
+                        <input type="number" id="quantity_buy" name="quantity" value="1" min="1" required><br><br>
+
+                        <label for="knowledge_economics_modifier_buy">Knowledge (Economics) Modifier:</label>
+                        <input type="number" id="knowledge_economics_modifier_buy" name="knowledge_economics_modifier" value="0" required><br><br>
+                        
+                        <p>Current Treasury: ${currentTreasury.toLocaleString()} Gold</p>
+                        <p id="buy-goods-cost-preview-internal"></p> {# Cost preview for buy Goods #}
+                    `;
+                    // Re-get references to newly created elements inside the modal
+                    const newGoodsTypeSelect = document.getElementById('goods_type_id_buy');
+                    const newQuantityInput = document.getElementById('quantity_buy');
+                    const newKnowledgeModifierInput = document.getElementById('knowledge_economics_modifier_buy');
+                    const newBuyGoodsCostPreviewInternal = document.getElementById('buy-goods-cost-preview-internal');
+
+                    await fetchSelectOptions("{% url 'get_goods_types_json' %}", newGoodsTypeSelect);
+                    
+                    // Add event listeners for cost preview
+                    newGoodsTypeSelect.onchange = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
+                    newQuantityInput.oninput = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
+                    newKnowledgeModifierInput.oninput = () => updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
+                    
+                    // Initial update call
+                    updateBuyGoodsPreview(newGoodsTypeSelect, newQuantityInput, newBuyGoodsCostPreviewInternal);
+                    buyGoodsCostPreview.style.display = 'block'; // Show external buy resources preview container
+
+                } else if (actionSlug === "recruit_population") {
+                    await buildDynamicInputs(action, dynamicInputsDiv);
+                }
+                else {
+                    // Generic actions with standard inputs (or no inputs)
+                    if (action.inputs && action.inputs.length > 0) {
+                        await buildDynamicInputs(action, dynamicInputsDiv);
+                    }
+                }
+                unifiedActionModal.style.display = 'flex';
+                formSubmitButton.style.display = 'block';
+            });
+        });
+
+        // Handle clicking the "Details" link (just shows description, no form)
+        actionDetailsLinks.forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const actionName = this.getAttribute('data-action');
+                const action = actionsMap.get(actionName);
+                if (action) {
+                    modalTitle.textContent = action.name + " (Details)";
+                    modalDescription.textContent = action.description + " Duration: " + action.duration + " season(s).";
+                    // Hide form elements if just showing details
+                    dynamicInputsDiv.innerHTML = '';
+                    formSubmitButton.style.display = 'none';
+                    // Hide all preview elements
+                    costPreview.style.display = 'none';
+                    buyResourcesCostPreview.style.display = 'none';
+                    tradePreview.style.display = 'none';
+                    unifiedActionModal.style.display = 'block';
+                }
+            });
+        });
+
+        // Universal close button for the unified modal
+        closeButton.addEventListener('click', function() {
+            unifiedActionModal.style.display = 'none';
+            formSubmitButton.style.display = 'block';
+            // Hide all preview elements on close
+            costPreview.style.display = 'none';
+            buyResourcesCostPreview.style.display = 'none';
+            tradePreview.style.display = 'none';
+        });
+
+        // Close modal by clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === unifiedActionModal) {
+                unifiedActionModal.style.display = 'none';
+                formSubmitButton.style.display = 'block';
+                // Hide all preview elements on close
+                costPreview.style.display = 'none';
+                buyResourcesCostPreview.style.display = 'none';
+                tradePreview.style.display = 'none';
+            }
+        });
+
+        // End Season button
+        endSeasonBtn.addEventListener('click', function() {
+            if (confirm("Are you sure you want to end the current season?")) {
+                window.location.href = "{% url 'end_turn' realm_name=realm.name %}";
+            }
+        });
+
+        // NEW: Helper function for "Buy Resources" preview
+        function updateBuyResourcesPreview(resourceSelect, quantityInput, previewElement) {
+            const selectedResourceId = resourceSelect.value;
+            const quantity = parseInt(quantityInput.value);
+
+            previewElement.textContent = "";
+
+            if (!selectedResourceId || isNaN(quantity) || quantity <= 0) {
+                // Also disable submit button if inputs are invalid
+                formSubmitButton.disabled = true;
+                return;
+            }
+
+            const resource = allResourcesData.find(r => r.id == selectedResourceId);
+            if (!resource) {
+                formSubmitButton.disabled = true; // Disable if resource not found
+                return;
+            }
+
+            // Use the correctly parsed numeric value
+            const costPerUnit = resource.value_numeric; 
+
+            // Additional check in case value_numeric didn't parse correctly
+            if (isNaN(costPerUnit)) {
+                console.error("Resource value_numeric is NaN for resource:", resource.name);
+                previewElement.textContent = "Error calculating cost.";
+                formSubmitButton.disabled = true;
+                return;
+            }
+
+            let totalCost = Math.round(costPerUnit * quantity);
+            
+            previewElement.textContent = `Total Cost: ${totalCost.toLocaleString()} Gold`;
+
+            // Client-side check for sufficient treasury
+            if (totalCost > currentTreasury) {
+                const maxAffordable = Math.floor(currentTreasury / resource.value);
+                previewElement.textContent += ` (Not enough Gold! Max: ${maxAffordable.toLocaleString()})`;
+                formSubmitButton.disabled = true; // Disable submit button
+            } else {
+                formSubmitButton.disabled = false; // Enable submit button
+            }
+        }
+
+        // NEW: Helper function for "Buy Resources" preview
+        function updateBuyGoodsPreview(goodsTypeSelect, quantityInput, previewElement) {
+            const selectedGoodsTypeId = goodsTypeSelect.value;
+            const quantity = parseInt(quantityInput.value);
+
+            previewElement.textContent = "";
+
+            if (!selectedGoodsTypeId || isNaN(quantity) || quantity <= 0) {
+                // Also disable submit button if inputs are invalid
+                formSubmitButton.disabled = true;
+                return;
+            }
+
+            const goodsType = allGoodsTypesData.find(r => r.id == selectedGoodsTypeId);
+            if (!goodsType) {
+                formSubmitButton.disabled = true; // Disable if resource not found
+                return;
+            }
+
+            // Use the correctly parsed numeric value
+            const costPerUnit = goodsType.value_numeric; 
+
+            // Additional check in case value_numeric didn't parse correctly
+            if (isNaN(costPerUnit)) {
+                console.error("GoodsType value_numeric is NaN for good:", goodsType.name);
+                previewElement.textContent = "Error calculating cost.";
+                formSubmitButton.disabled = true;
+                return;
+            }
+
+            let totalCost = Math.round(costPerUnit * quantity);
+            
+            previewElement.textContent = `Total Cost: ${totalCost.toLocaleString()} Gold`;
+
+            // Client-side check for sufficient treasury
+            if (totalCost > currentTreasury) {
+                const maxAffordable = Math.floor(currentTreasury / goodsType.value);
+                previewElement.textContent += ` (Not enough Gold! Max: ${maxAffordable.toLocaleString()})`;
+                formSubmitButton.disabled = true; // Disable submit button
+            } else {
+                formSubmitButton.disabled = false; // Enable submit button
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+/* styles.css */
+
+/* Enforce block display for form elements */
+form {
+    display: block;
+}
+
+label, select, input {
+    display: block;      /* Ensure all form elements are stacked */
+    margin-bottom: 10px; /* Add spacing between form elements */
+}
+
+/* Button container - flexbox for horizontal buttons */
+.button-container {
+    display: flex;       /* Align buttons horizontally */
+    gap: 10px;           /* Space between the buttons */
+}
+
+button {
+    /*width: 150px;        /* Optional: Set width for uniform button size */
+}
+
+a.back-link {
+    display: inline-block;    /* Ensure it's treated like a block-level element */
+    margin-top: 20px;         /* Adds space above the "Back" link */
+}
