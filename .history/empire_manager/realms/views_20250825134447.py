@@ -1079,27 +1079,6 @@ def end_turn(request, realm_name):
     next_season = realm.season
     next_year = realm.year
 
-    if next_season == "Spring":
-        # Compute annual costs; these properties return Decimals
-        gold_upkeep = realm.yearly_gold_costs
-        food_upkeep = realm.yearly_food_costs
-
-        # Deduct from treasury and food resources
-        if gold_upkeep > 0:
-            realm.treasury -= gold_upkeep
-        if food_upkeep > 0:
-            realm.update_resource_quantity("Food", -food_upkeep)
-
-        # Persist the changes
-        realm.save()
-
-        # Provide player feedback
-        messages.info(
-            request,
-            f"Year {current_year} concluded. Upkeep paid: {gold_upkeep} gold and "
-            f"{food_upkeep} food."
-        )
-
     ongoing_actions = OngoingAction.objects.filter(realm=realm, completed=False)
 
     for action_record in ongoing_actions: # Renamed 'action' to 'action_record' to avoid confusion
